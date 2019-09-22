@@ -80,6 +80,7 @@ void reiniciarThread(int thread, Grafo* g){
 // Iniciar un thread.
 int initThread(Grafo* g){
     // TO DO
+    
 }
 
 void procesarNodo( int nodo, int thread, Grafo* g ){
@@ -172,13 +173,13 @@ void* mstParaleloThread(void *p){
 
              // Se procura reservar el nodo que se quiere tomar, indicando la apropiación en la estructura usada.
 
-                 ThreadInfo tomarNodo(nodoActual, thread);
+                 ThreadInfo info= tomarNodo(nodoActual, thread);
 
 	     //Si se logra tomar, se procesa.
         
              //Si el nodo lo tiene otro thread, se tiene que fusionar
 
-                  requestFuse(.....);
+                  //requestFuse(.....);
     }
 }
 
@@ -205,10 +206,13 @@ void mstParalelo(Grafo *g, int cantThreads){
 
     // Se crean los threads 
     pthread_t threads[cantThreads];
-
     // Se inicializan las estructuras globales
-    // TO DO.
+    
     // Se deben usar pthread_create y pthread_join.
+    for (int tid = 0; tid < cantThreads; ++tid)
+        pthread_create(&threads[tid], NULL, mstParaleloThread, g);
+    for (int tid = 0; tid < cantThreads; ++tid)
+        pthread_join(threads[tid], NULL);
 }
 
 //Reinicia la experimentación.
@@ -251,7 +255,7 @@ void experimentacion(){
                 if(k == 0){
                     grafo = "arbol";
                     auto start = std::chrono::steady_clock::now();
-                    mstSecuencial(&g);
+                    //mstSecuencial(&g);
                     auto end = std::chrono::steady_clock::now();
 
                     std::cout << instancia << "," << n << "," << grafo << "," << 1 << ","
@@ -264,7 +268,7 @@ void experimentacion(){
                 if(k == 1){
                     grafo = "ralo";
                     auto start = std::chrono::steady_clock::now();
-                    mstSecuencial(&g);
+                    //mstSecuencial(&g);
                     auto end = std::chrono::steady_clock::now();
 
                     std::cout << instancia << "," << n << "," << grafo << "," << 1 << ","
@@ -277,7 +281,7 @@ void experimentacion(){
                 if(k == 2){
                     grafo = "completo";
                     auto start = std::chrono::steady_clock::now();
-                    mstSecuencial(&g);
+                    //mstSecuencial(&g);
                     auto end = std::chrono::steady_clock::now();
 
                     std::cout << instancia << "," << n << "," << grafo << "," << 1 << ","
@@ -350,7 +354,7 @@ int main(int argc, char const * argv[]) {
     nombre = string(argv[1]);
     int threads = 1;
     if (argc > 2){
-        algoritmo = string(argv[2]);
+        string algoritmo = string(argv[2]);
     }
 
     if (argc > 3){
