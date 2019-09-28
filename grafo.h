@@ -21,6 +21,12 @@ typedef struct Eje {
     this->peso = peso;
   }
   Eje():nodoDestino(0), peso(0) {}
+  bool operator<(Eje other){
+    return peso < other.peso;
+  }
+  bool operator>(Eje other){
+    return peso > other.peso;
+  }
 } Eje;
 
 class Grafo {
@@ -44,6 +50,12 @@ public:
   void insertarEje(int nodoA, int nodoB, int peso);
 private:
   void incrementarTotalEjes();
+};
+
+class Compare {
+  bool operator() (Eje eje_1, Eje eje_2){
+    return eje_1 < eje_2;
+  }
 };
 
 #endif

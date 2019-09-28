@@ -10,6 +10,9 @@
 #include <semaphore.h>
 #include <chrono>
 
+#include <queue>          // std::priority_queue
+
+
 using namespace std;
 
 
@@ -29,11 +32,21 @@ struct FusionInfo{
     int weight;
 };
 
-struct Thread{
- // TO DO
-
-// Estructura que debe contener los colores de los vértices (actual y vecinos). Las distancias, el árbol, y la herramientas de sincronización necesarias para evitar race conditions y deadlocks.
-
+class Thread{
+ // TODO
+ // Estructura que debe contener los colores de los vértices (actual y vecinos). Las distancias, el árbol, y la herramientas de sincronización necesarias para evitar race conditions y deadlocks.
+  public:
+    int buscarNodo();
+    void pintarNodo(int nodo);
+    void pintarVecinos(Grafo* g, int num);
+    void reiniciarThread(Grafo* g);
+    Thread* initThread(Grafo* g);
+    void procesarNodo(int nodo, Grafo* g);
+    ThreadInfo tomarNodo(int nodo);
+    void requestFuse(ThreadInfo other, int node);
+  private:
+    priority_queue<int, vector<Eje>, Compare > mstEjes;
+    Grafo mst;
 };
 
 // Imprimir el grafo resultado durante los experimentos
@@ -50,46 +63,47 @@ bool imprimirResultado = true;
 
 // Para coordinar las modificaciones de los colores.
 
-// Para contener la estructura global que indica el estado actual de cada nodo. 
+// Para contener la estructura global que indica el estado actual de cada nodo.
 
 
 //Retorna el nodo alcanzable a menor distancia
-int buscarNodo(int thread){
-  // TO DO
+int Thread::buscarNodo(){
+  // TODO
+  // Se le pide el nodo apuntado por la cabeza de la cola de prioridad
+
 }
 
 
 // Se pinta el nodo de negro para indicar que fue colocado en el árbol
-void pintarNodo(int num, int thread){
-   // TO DO
+void Thread::pintarNodo(int nodo){
+   // TODO
 
 }
 
 // Se pintan los vecinos de gris para marcar que son alcanzables desde el árbol (salvo los que ya son del árbol)
-void pintarVecinos(Grafo *g, int num, int thread){
-   // TO DO
+void Thread::pintarVecinos(Grafo *g, int num){
+   // TODO
 
 }
 
 //Reinicia las estructuras de un thread.
-void reiniciarThread(int thread, Grafo* g){
-    // TO DO
+void Thread::reiniciarThread(Grafo* g){
+    // TODO
 }
 
 
 // Iniciar un thread.
-int initThread(Grafo* g){
-    // TO DO
-    
+Thread* Thread::initThread(Grafo* g){
+    // TODO
 }
 
-void procesarNodo( int nodo, int thread, Grafo* g ){
+void Thread::procesarNodo( int nodo, Grafo* g ){
 
-    // TO DO. 
+    // TODO.
 
-    // Procurar pintar nodo. 
+    // Procurar pintar nodo.
 
-    // Descubrir vecinos. 
+    // Descubrir vecinos.
 
     // Iniciar la gestión de funsiones.
 
@@ -98,50 +112,50 @@ void procesarNodo( int nodo, int thread, Grafo* g ){
 
 // Trata de reservar el nodo que se pasa como parametro para el thread
 
-ThreadInfo tomarNodo(int nodo, int thread){
-  
-   // TO DO
+ThreadInfo Thread::tomarNodo(int nodo){
+
+   // TODO
 }
 
 // Procurar agregar el thread con mayor id a la cola de fusiones del thread con menor id
-void requestFuse(int thread, ThreadInfo other, int node){
-    // TO DO
+void Thread::requestFuse(ThreadInfo other, int node){
+    // TODO
 
     // Se deben evitar race conditions, en los siguietes casos:
         // Un nodo hijo no puede estar en la cola de fusiones de otro nodo.
-        // Solo se pueden agregar a la cola si el padre no está siendo fusionado por otro thread. 
+        // Solo se pueden agregar a la cola si el padre no está siendo fusionado por otro thread.
 }
 
 
 // Realizar la fusión
 void fuse(int parent, Grafo *g){
 
-    // TO DO
+    // TODO
 
     //Se determina el thread que tengo que fusionar
 
     //Se espera a que el thread esté listo para fusionarse
 
     //Se fusionan las colas de fusiones del hijo
- 
+
     //Se fusionan los colores del hijo
 
     //Se fusionan las distancias del hijo
 
     //Fusionar Arboles
-    
+
     //Se notifica al hijo que se termino la fusion
 }
 
 // Para buscar un nodo libre en el grafo.
 int buscarNodoLibre(){
-   // TO DO.
+   // TODO.
 }
 
 
 // Gestión principal del thread. Contiene el ciclo que le permite a cada thread hacer sus funciones.
 void* mstParaleloThread(void *p){
-
+/*
     Grafo* g = (Grafo*) p;
 
     // Se obtiene el numero de thread y se inicializan sus estructuras
@@ -155,17 +169,17 @@ void* mstParaleloThread(void *p){
     while(true){
 
         // Se termina la ejecución si el grafo ya no tiene vertices libres. Se imprime el resultado y se termina el thread
-        
-        // Si el thread está en la cola de fusiones de otro thread, lo notifica que puede fusionarse. 
-        
+
+        // Si el thread está en la cola de fusiones de otro thread, lo notifica que puede fusionarse.
+
         // Se deben usar mecanismos de sincronización.
-        
+
         // TO DO
 
 	      // Si otro thread me está fusionando, esperar a que termine.
 
               		// Reinicializo las estructuras del thread y arranco de nuevo.
- 
+
  	      // Si tiene elementos en la cola de fusion, debe fusionarlos.
 
              // Se busca el nodo más cercano que no esté en el árbol, pero que sea alcanzable
@@ -176,17 +190,21 @@ void* mstParaleloThread(void *p){
                  ThreadInfo info= tomarNodo(nodoActual, thread);
 
 	     //Si se logra tomar, se procesa.
-        
+
              //Si el nodo lo tiene otro thread, se tiene que fusionar
 
                   //requestFuse(.....);
+    }*/
+    
+    while (1) {
+      /* code */
     }
 }
 
 
 
 void mstParalelo(Grafo *g, int cantThreads){
-
+/*
     //Verificar cantidad de threads para ejecutar el algoritmo
 
     if(cantThreads < 1){
@@ -204,20 +222,21 @@ void mstParalelo(Grafo *g, int cantThreads){
         return;
     }
 
-    // Se crean los threads 
+    // Se crean los threads
     pthread_t threads[cantThreads];
     // Se inicializan las estructuras globales
-    
+
     // Se deben usar pthread_create y pthread_join.
     for (int tid = 0; tid < cantThreads; ++tid)
         pthread_create(&threads[tid], NULL, mstParaleloThread, g);
     for (int tid = 0; tid < cantThreads; ++tid)
         pthread_join(threads[tid], NULL);
+        */
 }
 
 //Reinicia la experimentación.
 void resetExperimentacion(){
-   // TO DO 
+   // TO DO
 
 }
 
@@ -338,6 +357,7 @@ void experimentacion(){
 
 }
 
+
 int main(int argc, char const * argv[]) {
 
     if(argc <= 1){
@@ -365,7 +385,7 @@ int main(int argc, char const * argv[]) {
     if( g.inicializar(nombre) == 1){
 
             mstParalelo(&g, threads);
-	
+
     }else{
 	    cerr << "Error: Grafo no cargado correctamente" << endl;
         return 1;
