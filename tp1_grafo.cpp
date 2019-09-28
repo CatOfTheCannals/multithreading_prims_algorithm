@@ -33,11 +33,10 @@ struct FusionInfo{
 };
 
 class Thread{
- // TODO
  // Estructura que debe contener los colores de los vértices (actual y vecinos). Las distancias, el árbol, y la herramientas de sincronización necesarias para evitar race conditions y deadlocks.
   public:
     int buscarNodo();
-    void pintarNodo(int nodo);
+    void pintarNodo(int nodo, Grafo* g);
     void pintarVecinos(Grafo* g, int num);
     void reiniciarThread(Grafo* g);
     Thread* initThread(Grafo* g);
@@ -68,16 +67,21 @@ bool imprimirResultado = true;
 
 //Retorna el nodo alcanzable a menor distancia
 int Thread::buscarNodo(){
-  // TODO
   // Se le pide el nodo apuntado por la cabeza de la cola de prioridad
-
+  return mstEjes.top().nodoDestino;
 }
 
 
 // Se pinta el nodo de negro para indicar que fue colocado en el árbol
-void Thread::pintarNodo(int nodo){
+void Thread::pintarNodo(int nodo, Grafo* g){
    // TODO
-
+   mst.insertarNodo(nodo); //Inserto el nodo en el mst
+   //Agrego todas las aristas que salen del nodo insertado y no apuntan a algún otro nodo de los que ya están en el mst
+   for (int i = 0; i < g->listaDeAdyacencias[nodo].size(); i++) {
+     if(mst.noEsta(g->listaDeAdyacencias[nodo][i].nodoDestino)){
+       mstEjes.push(g->listaDeAdyacencias[nodo][i]);
+     }
+   }
 }
 
 // Se pintan los vecinos de gris para marcar que son alcanzables desde el árbol (salvo los que ya son del árbol)
@@ -94,7 +98,9 @@ void Thread::reiniciarThread(Grafo* g){
 
 // Iniciar un thread.
 Thread* Thread::initThread(Grafo* g){
-    // TODO
+  //Inicializo mst con un nodo al azar de todos los de g e incluyo los ejes que aparecen en su lista de adyacencia en mstEjes (pues son candidatos a ser elegidos)
+  int nodo = rand() % g.numVertices;  //Para que funcione de forma concurrente debería elegir un nodo al azar entre los que no fueron pintados por nadie
+  pintarNodo(nodo, g);
 }
 
 void Thread::procesarNodo( int nodo, Grafo* g ){
@@ -195,7 +201,7 @@ void* mstParaleloThread(void *p){
 
                   //requestFuse(.....);
     }*/
-    
+
     while (1) {
       /* code */
     }

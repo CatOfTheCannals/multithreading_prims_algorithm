@@ -58,6 +58,24 @@ void Grafo::insertarEje(int nodoA, int nodoB, int peso){
     incrementarTotalEjes();
 }
 
+void Grafo::insertarNodo(int nodo){
+    //Creo el vector que será la lista de adyacencias del nodo
+    vector<Eje> ejesN;
+    //Inserto el par (nodo, lista) en el diccionario
+    listaDeAdyacencias.insert({nodo, ejesN});
+
+
+    incrementarTotalNodos();
+}
+
+bool noEsta(int nodo){
+  return listaDeAdyacencias.find(nodo) == listaDeAdyacencias.end();
+}
+
+void Grafo::incrementarTotalNodos(){
+    numVertices += 1;
+}
+
 void Grafo::incrementarTotalEjes(){
   numEjes += 1;
 }

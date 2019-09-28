@@ -48,7 +48,10 @@ public:
   vector<Eje>::iterator vecinosBegin(int num);
   vector<Eje>::iterator vecinosEnd(int num);
   void insertarEje(int nodoA, int nodoB, int peso);
+  void insertarNodo(int nodo);
+  bool noEsta(int nodo);
 private:
+  void incrementarTotalNodos();
   void incrementarTotalEjes();
 };
 
