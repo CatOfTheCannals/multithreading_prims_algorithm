@@ -99,7 +99,7 @@ void Thread::reiniciarThread(Grafo* g){
 // Iniciar un thread.
 Thread* Thread::initThread(Grafo* g){
   //Inicializo mst con un nodo al azar de todos los de g e incluyo los ejes que aparecen en su lista de adyacencia en mstEjes (pues son candidatos a ser elegidos)
-  int nodo = rand() % g.numVertices;  //Para que funcione de forma concurrente debería elegir un nodo al azar entre los que no fueron pintados por nadie
+  int nodo = rand() % g->numVertices;  //Para que funcione de forma concurrente debería elegir un nodo al azar entre los que no fueron pintados por nadie
   pintarNodo(nodo, g);
 }
 

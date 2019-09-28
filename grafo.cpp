@@ -68,7 +68,7 @@ void Grafo::insertarNodo(int nodo){
     incrementarTotalNodos();
 }
 
-bool noEsta(int nodo){
+bool Grafo::noEsta(int nodo){
   return listaDeAdyacencias.find(nodo) == listaDeAdyacencias.end();
 }
 
