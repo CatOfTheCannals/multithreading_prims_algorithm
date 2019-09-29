@@ -16,22 +16,12 @@
 
 using namespace std;
 
-
-// Datos para agregar a la cola de fusiones de cada thread.
-struct FusionInfo{
-    int thread;  // thread que se debe fusionar
-
-    // El eje o arista a agregar:
-    int fromNode;
-    int toNode;
-    int weight;
-};
-
 class Thread{
  // Estructura que debe contener los colores de los vértices (actual y vecinos). Las distancias, el árbol, y la herramientas de sincronización necesarias para evitar race conditions y deadlocks.
   public:
     Thread(pthread_t id) {
         tid = id;
+        merged = false;
     }
     Thread(){};
     Thread& operator=(Thread other);
@@ -42,14 +32,27 @@ class Thread{
     Thread* initThread(Grafo* g);
     void procesarNodo(int nodo, Grafo* g);
     Thread tomarNodo(int nodo);
-    void requestFuse(Thread other, int source_node, int dest_node);
+    void requestMerge(Thread other, int source_node, int dest_node);
+    void merge(Thread other, Grafo* g);
+
+
     priority_queue<int, vector<Eje>, Compare > mstEjes;
     Grafo mst;
     pthread_t tid;
     queue<pair<Thread*, pair<int,int> > > request_queue;
     friend void swap(Thread& lhs, Thread& rhs);
+    bool merged;
 
 };
+
+// Datos compartidos entre threads
+struct sharedData{
+    Grafo* _g;  // Grafo a cubrir
+    //vector<pthread_t> threads;
+    vector<Thread> _threadObjects;
+    vector<pthread_t> _nodeColorArray;
+};
+
 
 // Imprimir el grafo resultado durante los experimentos
 bool imprimirResultado = true;
@@ -75,6 +78,7 @@ void swap(Thread& lhs, Thread& rhs) {
     swap(lhs.mst, rhs.mst);
     swap(lhs.tid, rhs.tid);
     swap(lhs.request_queue, rhs.request_queue);
+    lhs.merged = rhs.merged;
 
 }
 
@@ -146,7 +150,7 @@ Thread Thread::tomarNodo(int nodo){
 }
 
 // Procurar agregar el thread con mayor id a la cola de fusiones del thread con menor id
-void Thread::requestFuse(Thread other, int source_node, int dest_node){
+void Thread::requestMerge(Thread other, int source_node, int dest_node){
     // """TODO Se deben evitar race conditions, en los siguietes casos:
         // Un nodo hijo no puede estar en la cola de fusiones de otro nodo.
         // Solo se pueden agregar a la cola si el padre no está siendo fusionado por otro thread."""
@@ -154,22 +158,22 @@ void Thread::requestFuse(Thread other, int source_node, int dest_node){
     // asumimos que yo ya estoy bloqueado, para que no me pidan requests
 
     // pregunto si el arbol al que quiero hacer request esta bloqueado
-        // si? 
-            // si me pidieron merges, los resuelvo y me restarteo        
+        // si?
+            // si me pidieron merges, los resuelvo y me restarteo
             // sigo preguntando si ese nodo pertenece a un arbol bloqueado
         // no?
             // entonces me encolo y me quedo esperando a que se resuelva el merge o me pidan algo
-            
 
 
 
-    other.request_queue.push(make_pair((this), make_pair(source_node, dest_node))); 
-    
+
+    other.request_queue.push(make_pair((this), make_pair(source_node, dest_node)));
+
 }
 
 
 // Realizar la fusión
-void fuse(int parent, Grafo *g){
+void Thread::merge(Thread other, Grafo *g){
 
     // TODO
 
@@ -238,7 +242,7 @@ void* mstParaleloThread(void *p){
                   //requestFuse(.....);
     }
     */
-    
+
 }
 
 
@@ -266,15 +270,20 @@ void mstParalelo(Grafo *g, int cantThreads){
     pthread_t threads[cantThreads];
     // Se inicializan las estructuras globales
 
-    Thread threadObjects[cantThreads];
+    vector<Thread> threadObjects(cantThreads);
 
     //TODO(charli): asegurarnos de que cada vez que un nodo es pintado o fagocitado, esto cambia
     // tambien queremos que arranque inicializado en -1
-    pthread_t nodeColorArray[g->numVertices]; 
+    vector<pthread_t> nodeColorArray(g->numVertices, -1);
+
+    sharedData shared;
+    shared._g = g;
+    shared._threadObjects = threadObjects;
+    shared._nodeColorArray = nodeColorArray;
 
     // Se deben usar pthread_create y pthread_join.
     for (int tid = 0; tid < cantThreads; ++tid) {
-        pthread_create(&threads[tid], NULL, mstParaleloThread, g); // TODO(charli): pasar todo lo que es memoria compartida
+        pthread_create(&threads[tid], NULL, mstParaleloThread, &shared); // TODO(charli): pasar todo lo que es memoria compartida
         threadObjects[tid] = Thread(threads[tid]);
     }
     for (int tid = 0; tid < cantThreads; ++tid)
