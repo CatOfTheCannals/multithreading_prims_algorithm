@@ -95,6 +95,10 @@ int Thread::buscarNodo(){
 void Thread::pintarNodo(int nodo, Grafo* g){
    // TODO
    mst.insertarNodo(nodo); //Inserto el nodo en el mst
+}
+
+// Se pintan los vecinos de gris para marcar que son alcanzables desde el árbol (salvo los que ya son del árbol)
+void Thread::pintarVecinos(Grafo *g, int nodo){
    //Agrego todas las aristas que salen del nodo insertado y no apuntan a algún otro nodo de los que ya están en el mst
    for (int i = 0; i < g->listaDeAdyacencias[nodo].size(); i++) {
      if(mst.noEsta(g->listaDeAdyacencias[nodo][i].nodoDestino)){
@@ -103,23 +107,22 @@ void Thread::pintarNodo(int nodo, Grafo* g){
    }
 }
 
-// Se pintan los vecinos de gris para marcar que son alcanzables desde el árbol (salvo los que ya son del árbol)
-void Thread::pintarVecinos(Grafo *g, int num){
-   // TODO
-
-}
-
 //Reinicia las estructuras de un thread.
 void Thread::reiniciarThread(Grafo* g){
-    // TODO
+    g->limpiarAuxiliares();
+    initThread(g);
 }
 
 
 // Iniciar un thread.
 Thread* Thread::initThread(Grafo* g){ // TODO(charli): poner esto en void??
+    bool expected = true;
   //Inicializo mst con un nodo al azar de todos los de g e incluyo los ejes que aparecen en su lista de adyacencia en mstEjes (pues son candidatos a ser elegidos)
-  int nodo = rand() % g->numVertices;  //Para que funcione de forma concurrente debería elegir un nodo al azar entre los que no fueron pintados por nadie
-  pintarNodo(nodo, g);
+  for(int i=0;i<g->numVertices;i++){
+      if((g->listaNodosLibres.at(i))->compare_exchange_strong(expected,false)){
+        pintarNodo(i, g);
+      }
+  }
 }
 
 void Thread::procesarNodo( int nodo, Grafo* g ){
@@ -127,11 +130,11 @@ void Thread::procesarNodo( int nodo, Grafo* g ){
     // TODO.
 
     // Procurar pintar nodo.
-
+    pintarNodo(nodo,g);
     // Descubrir vecinos.
-
+    pintarVecinos(g,nodo);
     // Iniciar la gestión de funsiones.
-
+    //?(Dante)
 }
 
 
