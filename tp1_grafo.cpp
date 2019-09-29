@@ -16,6 +16,8 @@
 
 using namespace std;
 
+
+
 class Thread{
  // Estructura que debe contener los colores de los vértices (actual y vecinos). Las distancias, el árbol, y la herramientas de sincronización necesarias para evitar race conditions y deadlocks.
   public:
@@ -42,6 +44,7 @@ class Thread{
     queue<pair<Thread*, pair<int,int> > > request_queue;
     friend void swap(Thread& lhs, Thread& rhs);
     bool merged;
+
 
 };
 
@@ -79,6 +82,7 @@ void swap(Thread& lhs, Thread& rhs) {
     swap(lhs.tid, rhs.tid);
     swap(lhs.request_queue, rhs.request_queue);
     lhs.merged = rhs.merged;
+    //lhs.merged.store(rhs.merged.load());
 
 }
 
