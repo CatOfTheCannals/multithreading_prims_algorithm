@@ -47,7 +47,7 @@ vector<Eje>::iterator Grafo::vecinosEnd(int num){
 }
 
 void Grafo::insertarEje(int nodoA, int nodoB, int peso){
-    //Agrego eje de nodoA a nodoB
+    //Agrego eje de nodoA a nodoB 
     Eje ejeA(nodoB,peso);
     listaDeAdyacencias[nodoA].push_back(ejeA);
 
