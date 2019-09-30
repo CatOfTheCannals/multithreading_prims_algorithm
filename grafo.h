@@ -4,6 +4,7 @@
 #include <iostream>
 #include <vector>
 #include <map>
+#include <atomic>
 
 #define BLANCO -10
 #define GRIS -20
@@ -37,6 +38,8 @@ public:
 
   map<int,vector<Eje>> listaDeAdyacencias;
 
+  vector<atomic_bool*> listaNodosLibres;
+
   Grafo() {
     numVertices = 0;
     numEjes = 0;
@@ -50,6 +53,7 @@ public:
   void insertarEje(int nodoA, int nodoB, int peso);
   void insertarNodo(int nodo);
   bool noEsta(int nodo);
+  void limpiarAuxiliares();
 private:
   void incrementarTotalNodos();
   void incrementarTotalEjes();

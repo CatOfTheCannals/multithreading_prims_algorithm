@@ -133,3 +133,11 @@ bool Grafo::esConexo(){
     }
     return nodosPintados == numVertices;
 }
+
+void Grafo::limpiarAuxiliares(){
+  //Aca van a ir los auxiliares a crear
+  listaNodosLibres.clear();
+  for(int i=0;i<numVertices;i++){
+    // listaNodosLibres.push_back(atomic_bool{ false }&);
+  }
+}
