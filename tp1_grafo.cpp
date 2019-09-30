@@ -42,7 +42,7 @@ class Thread{
     void pintarVecinos(Grafo* g, int num);
     void reiniciarThread(sharedData* shared);
     Thread* initThread(sharedData* shared);
-    void procesarNodo(int nodo, Grafo* g);
+    void procesarNodo(int nodo, sharedData* shared);
     Thread tomarNodo(int nodo);
     void requestMerge(Thread other, int source_node, int dest_node);
     void merge(Thread other, Grafo* g);
@@ -129,28 +129,36 @@ Thread* Thread::initThread(sharedData* shared){ // TODO(charli): poner esto en v
 
   pthread_mutex_lock(&shared->_initMutex);
 
-  // buscar nodo -> me devuelve un nodo libre y lo saca de la lista
-
   int nodePos = rand() % shared->_freeNodes.size();
   int node = rand() % shared->_freeNodes[nodePos];
 
-  cout << "Soy el proceso " << _threadCreationIdx << " y tomo el nodo " << shared->_freeNodes[nodePos] << " :) " << endl;
+  //cout << "Soy el proceso " << _threadCreationIdx << " y tomo el nodo " << shared->_freeNodes[nodePos] << " :) " << endl;
 
   shared->_freeNodes.erase(shared->_freeNodes.begin()+nodePos);
 
+  /*std::cout << "___________________________________________________________________________________" << '\n';
+  _mst.imprimirGrafo();
+  std::cout << "___________________________________________________________________________________" << '\n';
+  */
   pthread_mutex_unlock(&shared->_initMutex);
+
+  procesarNodo(node, shared);
+
+
 
 }
 
-void Thread::procesarNodo( int nodo, Grafo* g ){
+void Thread::procesarNodo( int node, sharedData* shared ){
 
     // TODO.
     // Procurar pintar nodo.
-    pintarNodo(nodo,g);
+    pintarNodo(node,shared->_g);
     // Descubrir vecinos.
-    pintarVecinos(g,nodo);
+    pintarVecinos(shared->_g,node);
     // Iniciar la gestión de fun s iones.
     //?(Dante)
+
+
 }
 
 
