@@ -54,6 +54,7 @@ public:
   void insertarNodo(int nodo);
   bool noEsta(int nodo);
   void limpiarAuxiliares();
+  
 private:
   void incrementarTotalNodos();
   void incrementarTotalEjes();

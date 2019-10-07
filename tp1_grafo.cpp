@@ -38,7 +38,7 @@ class Thread{
     Thread(){};
     Thread& operator=(Thread other);
     int buscarNodo();
-    void pintarNodo(int nodo, Grafo* g);
+    void pintarNodo(int nodo, sharedData* shared);
     void pintarVecinos(Grafo* g, int num);
     void reiniciarThread(sharedData* shared);
     Thread* initThread(sharedData* shared);
@@ -102,9 +102,13 @@ int Thread::buscarNodo(){
 
 
 // Se pinta el nodo de negro para indicar que fue colocado en el árbol
-void Thread::pintarNodo(int nodo, Grafo* g){
-   // TODO
-   _mst.insertarNodo(nodo); //Inserto el nodo en el mst
+void Thread::pintarNodo(int nodo, sharedData* shared){
+    
+    // asumo que el lock del nodo ya esta pedido
+    auto &nodeColorArray = shared->_nodeColorArray;
+    nodeColorArray[nodo] = _threadCreationIdx; // TODO(charli): sanitycheckear esto!!
+    
+    _mst.insertarNodo(nodo); //Inserto el nodo en el mst
 }
 
 // Se pintan los vecinos de gris para marcar que son alcanzables desde el árbol (salvo los que ya son del árbol)
@@ -127,24 +131,56 @@ void Thread::reiniciarThread(sharedData* shared){
 // Iniciar un thread.
 Thread* Thread::initThread(sharedData* shared){ // TODO(charli): poner esto en void??
 
-  pthread_mutex_lock(&shared->_initMutex);
+    auto &nodesMutexes = shared->_nodesMutexes;
+    auto &freeNodes = shared->_freeNodes;
+    auto &nodeColorArray = shared->_nodeColorArray;
 
-  int nodePos = rand() % shared->_freeNodes.size();
-  int node = rand() % shared->_freeNodes[nodePos];
-
-  //cout << "Soy el proceso " << _threadCreationIdx << " y tomo el nodo " << shared->_freeNodes[nodePos] << " :) " << endl;
-
-  shared->_freeNodes.erase(shared->_freeNodes.begin()+nodePos);
-
-  /*std::cout << "___________________________________________________________________________________" << '\n';
-  _mst.imprimirGrafo();
-  std::cout << "___________________________________________________________________________________" << '\n';
-  */
-  pthread_mutex_unlock(&shared->_initMutex);
-
-  procesarNodo(node, shared);
+    int node;
+    bool nodeFound = false;
 
 
+    cout << "cantidad de nodos libres: " << freeNodes.size() << endl;
+    
+    
+    pthread_mutex_lock(&shared->_initMutex);
+
+
+    if(freeNodes.size() == 0) {
+        // TODO(charli): MUERE EL THREAD
+    }
+
+    while(!nodeFound){    
+        node = freeNodes.back();
+
+        // pido el mutex de ese Nodo
+        pthread_mutex_lock(&nodesMutexes[node]);
+        cout << "pedi lock de nodo" << endl;
+
+        // Si estuviera pintado
+        if(nodeColorArray[node] != -1) {
+            cout << "pido otro" << endl;
+            continue; // Pido otro
+        } else {
+            cout << "encontre nodo" << endl;
+            nodeFound = true;
+            procesarNodo(node, shared);
+        }
+
+        pthread_mutex_unlock(&nodesMutexes[node]);
+    }
+
+    //cout << "Soy el proceso " << _threadCreationIdx << " y tomo el nodo " << freeNodes[nodePos] << " :) " << endl;
+    cout << "tomo el nodo " << node << endl;
+    // lo saco de freeNodes
+    freeNodes.pop_back();
+    pthread_mutex_unlock(&shared->_initMutex);
+
+    cout << "cantidad de nodos libres: " << freeNodes.size() << endl;
+
+    /*std::cout << "___________________________________________________________________________________" << '\n';
+    _mst.imprimirGrafo();
+    std::cout << "___________________________________________________________________________________" << '\n';
+    */  
 
 }
 
@@ -152,7 +188,7 @@ void Thread::procesarNodo( int node, sharedData* shared ){
 
     // TODO.
     // Procurar pintar nodo.
-    pintarNodo(node,shared->_g);
+    pintarNodo(node,shared);
     // Descubrir vecinos.
     pintarVecinos(shared->_g,node);
     // Iniciar la gestión de fun s iones.
@@ -230,8 +266,6 @@ void* mstParaleloThread(void *p){
     // Ciclo principal de cada thread
     while(true){
 
-        break; // TODO(charli): sacar esto cuando agreguemos
-
         // Se termina la ejecución si el grafo ya no tiene vertices libres. Se imprime el resultado y se termina el thread
 
         // Si el thread está en la cola de fusiones de otro thread, lo notifica que puede fusionarse.
@@ -300,8 +334,7 @@ void mstParalelo(Grafo *g, int cantThreads){
 
     unordered_map<pthread_t, Thread> threadObjects;
 
-    //TODO(charli): asegurarnos de que cada vez que un nodo es pintado o fagocitado, esto cambia
-    // tambien queremos que arranque inicializado en -1
+    // TODO(charli): asegurarnos de que cada vez que un nodo es pintado o fagocitado, esto cambia
     vector<pthread_t> nodeColorArray(g->numVertices, -1);
 
     vector<pthread_mutex_t> nodesMutexes(g->numVertices, PTHREAD_MUTEX_INITIALIZER);
@@ -325,7 +358,7 @@ void mstParalelo(Grafo *g, int cantThreads){
 
     // Se deben usar pthread_create y pthread_join.
     for (int threadIdx = 0; threadIdx < cantThreads; ++threadIdx) {
-        pthread_create(&threads[threadIdx], NULL, mstParaleloThread, &pair); // TODO(charli): pasar todo lo que es memoria compartida
+        pthread_create(&threads[threadIdx], NULL, mstParaleloThread, &pair);
         //threadObjects[threadIdx] = Thread(threads[threadIdx], threadIdx);
     }
     for (int threadIdx = 0; threadIdx < cantThreads; ++threadIdx)

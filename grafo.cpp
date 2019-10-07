@@ -21,7 +21,7 @@ int Grafo::inicializar(string nombreArchivo) {
   listaDeAdyacencias = map<int,vector<Eje>>();
 
   int v1, v2, peso;
-  //Crear los ejes entre ambos nodos
+  // Crear los ejes entre ambos nodos
   for(int ejes = 0; ejes < numEjesArchivo; ejes++){
 
     if(archivo.eof()){
