@@ -44,7 +44,7 @@ class Thread{
     Thread* initThread(sharedData* shared);
     void procesarNodo(int nodo, sharedData* shared);
     Thread tomarNodo(int nodo);
-    void requestMerge(Thread other, int source_node, int dest_node);
+    void requestMerge(Thread* other, int source_node, int dest_node);
     void merge(Thread other, Grafo* g);
     friend void swap(Thread& lhs, Thread& rhs);
 
@@ -146,7 +146,7 @@ Thread* Thread::initThread(sharedData* shared){ // TODO(charli): poner esto en v
 
 
     if(freeNodes.size() == 0) {
-        // TODO(charli): MUERE EL THREAD
+        pthread_exit(0);
     }
 
     while(!nodeFound){    
@@ -206,12 +206,12 @@ Thread Thread::tomarNodo(int nodo){
 }
 
 // Procurar agregar el thread con mayor id a la cola de fusiones del thread con menor id
-void Thread::requestMerge(Thread other, int source_node, int dest_node){
+void Thread::requestMerge(Thread* other, int source_node, int dest_node){
     // """TODO Se deben evitar race conditions, en los siguietes casos:
         // Un nodo hijo no puede estar en la cola de fusiones de otro nodo.
         // Solo se pueden agregar a la cola si el padre no está siendo fusionado por otro thread."""
-
-    other._request_queue.push(make_pair((this), make_pair(source_node, dest_node)));
+    
+    other->_request_queue.push(make_pair((this), make_pair(source_node, dest_node)));
 
 }
 
@@ -219,10 +219,14 @@ void Thread::requestMerge(Thread other, int source_node, int dest_node){
 // Realizar la fusión
 void Thread::merge(Thread other, Grafo *g){
 
-    // TODO
-
     //Se determina el thread que tengo que fusionar
-
+    if(_threadCreationIdx>other._threadCreationIdx){
+        //Se fusiona a mi
+        //Añadir a la lista solo los que no esten?
+        while(!other._mstEjes.empty()){
+            // _mstEjes;(Dante)TODO ver que pushear a la lista, y si necesito mergear algo mas
+        }
+    }
     //Se espera a que el thread esté listo para fusionarse
 
     //Se fusionan las colas de fusiones del hijo
