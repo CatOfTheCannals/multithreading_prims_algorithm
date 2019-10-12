@@ -45,7 +45,7 @@ class Thread{
     void procesarNodo(int nodo, sharedData* shared);
     Thread tomarNodo(int nodo);
     void requestMerge(Thread* other, int source_node, int dest_node);
-    void merge(Thread other, Grafo* g);
+    void merge(Thread* other, Grafo* g);
     friend void swap(Thread& lhs, Thread& rhs);
 
 
@@ -168,7 +168,7 @@ Thread* Thread::initThread(sharedData* shared){ // TODO(charli): poner esto en v
 
         pthread_mutex_unlock(&nodesMutexes[node]);
     }
-
+    nodeFound = false;
     //cout << "Soy el proceso " << _threadCreationIdx << " y tomo el nodo " << freeNodes[nodePos] << " :) " << endl;
     cout << "tomo el nodo " << node << endl;
     // lo saco de freeNodes
@@ -186,7 +186,15 @@ Thread* Thread::initThread(sharedData* shared){ // TODO(charli): poner esto en v
 
 void Thread::procesarNodo( int node, sharedData* shared ){
 
-    // TODO.
+    // TODO(DANTE)CONDICION PARA MERGEAR
+    if(true){
+        while(!_merged){
+            if(!_request_queue.empty()){
+                merge(_request_queue.front().first,&_mst);
+                _request_queue.pop();
+            }
+        }
+    }
     // Procurar pintar nodo.
     pintarNodo(node,shared);
     // Descubrir vecinos.
@@ -217,15 +225,24 @@ void Thread::requestMerge(Thread* other, int source_node, int dest_node){
 
 
 // Realizar la fusión
-void Thread::merge(Thread other, Grafo *g){
-
+void Thread::merge(Thread* other, Grafo *g){
+    other->_merged=false;
     //Se determina el thread que tengo que fusionar
-    if(_threadCreationIdx>other._threadCreationIdx){
+    if(_threadCreationIdx>other->_threadCreationIdx){
         //Se fusiona a mi
-        //Añadir a la lista solo los que no esten?
-        while(!other._mstEjes.empty()){
-            // _mstEjes;(Dante)TODO ver que pushear a la lista, y si necesito mergear algo mas
+        int nodo;
+        while(!other->_mstEjes.empty()){
+            nodo=other->_mstEjes.top().nodoDestino;
+            for (int i = 0; i < g->listaDeAdyacencias[nodo].size(); i++) {
+                if(_mst.noEsta(g->listaDeAdyacencias[nodo][i].nodoDestino)){
+                    _mstEjes.push(other->_mstEjes.top());
+                }
+                other->_mstEjes.pop();
+            }
         }
+        _request_queue.push(other->_request_queue.front());
+        other->_request_queue.pop();
+        other->_merged=true;
     }
     //Se espera a que el thread esté listo para fusionarse
 
@@ -265,7 +282,7 @@ void* mstParaleloThread(void *p){
 
     (*threadObjects)[tid].initThread(shared);
 
-//    cout << "defined initThread succesfully" << endl;
+    cout << "defined initThread succesfully" << endl;
 /*
     // Ciclo principal de cada thread
     while(true){
