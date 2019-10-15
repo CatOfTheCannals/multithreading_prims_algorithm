@@ -129,7 +129,7 @@ void Thread::reiniciarThread(sharedData* shared){
 
 
 // Iniciar un thread.
-Thread* Thread::initThread(sharedData* shared){ // TODO(charli): poner esto en void??
+Thread* Thread::initThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){ // TODO(charli): poner esto en void??
 
     auto &nodesMutexes = shared->_nodesMutexes;
     auto &freeNodes = shared->_freeNodes;
@@ -142,9 +142,10 @@ Thread* Thread::initThread(sharedData* shared){ // TODO(charli): poner esto en v
     cout << "cantidad de nodos libres: " << freeNodes.size() << endl;
     
     
-    pthread_mutex_lock(&shared->_initMutex);
+    pthread_mutex_lock(&shared->_initMutex); // TODO(charli): agregar explicacion de por que usamos este mutex. deberiamos pedirlo tambien en otros lugares del codigo?
 
 
+    // si no quedan nodos libres, se acabo la joda
     if(freeNodes.size() == 0) {
         pthread_exit(0);
     }
@@ -163,7 +164,7 @@ Thread* Thread::initThread(sharedData* shared){ // TODO(charli): poner esto en v
         } else {
             cout << "encontre nodo" << endl;
             nodeFound = true;
-            procesarNodo(node, shared);
+            procesarNodo(node, shared, threadObjects);
         }
 
         pthread_mutex_unlock(&nodesMutexes[node]);
@@ -184,25 +185,53 @@ Thread* Thread::initThread(sharedData* shared){ // TODO(charli): poner esto en v
 
 }
 
-void Thread::procesarNodo( int node, sharedData* shared ){
+void Thread::procesarNodo( int node, sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){
 
-    // TODO(DANTE)CONDICION PARA MERGEAR
-    if(true){
-        while(!_merged){
-            if(!_request_queue.empty()){
-                merge(_request_queue.front().first,&_mst);
-                _request_queue.pop();
+    auto &nodesMutexes = shared->_nodesMutexes;
+    auto &nodeColorArray = shared->_nodeColorArray;
+    auto &threadsMutexes = shared->_threadsMutexes;
+
+    // pedir mutex del nodo
+    pthread_mutex_lock(&nodesMutexes[node]);
+
+    // leer estado del nodo
+    auto node_color = nodeColorArray[node];
+
+    // si esta libre lo pinto asi nomas
+    if(node_color == -1) {
+        pintarNodo(node,shared);
+        pintarVecinos(shared->_g,node); // TODO(charli): ver que onda pintarVecinos
+        return;
+    }
+
+    // si esta tomado hay que mergear
+    else {
+        bool busyWaiting = True;
+        while(busyWaiting) {
+            // si el arbol al que me quiero mergear esta disponible, le mando request
+            if (pthread_mutex_trylock(&threadsMutexes[node_color]) == 0) {
+                busyWaiting = false;
+
+                Thread other = threadObjects[node_color];
+
+                // TODO_IMPORTANTE(charli): tenemos que definir la logica para entender cual es el source_node
+                requestMerge(&other, int source_node, int dest_node); 
+
+                pthread_mutex_unlock (&threadsMutexes[node_color]);
+
+            } else {
+                // si tengo merges pendientes en mi cola los resuelvo y no mando request
+                if(_request_queue.size() > 0) {
+                    busyWaiting = false;
+                    Thread* other = _request_queue.front().first;
+                    merge(other, &_mst);
+                    _request_queue.pop();
+                    return;
+                }
+
             }
         }
     }
-    // Procurar pintar nodo.
-    pintarNodo(node,shared);
-    // Descubrir vecinos.
-    pintarVecinos(shared->_g,node);
-    // Iniciar la gestión de fun s iones.
-    //?(Dante)
-
-
 }
 
 
@@ -240,7 +269,7 @@ void Thread::merge(Thread* other, Grafo *g){
                 other->_mstEjes.pop();
             }
         }
-        _request_queue.push(other->_request_queue.front());
+        _request_queue.push(other->_request_queue.front()); // TODO(charli): esta bien que esta operacion de push solo se haga una vez?
         other->_request_queue.pop();
         other->_merged=true;
     }
@@ -280,7 +309,7 @@ void* mstParaleloThread(void *p){
 
     pthread_mutex_unlock(&(shared->_mapMutex));
 
-    (*threadObjects)[tid].initThread(shared);
+    (*threadObjects)[tid].initThread(shared), threadObjects;
 
     cout << "defined initThread succesfully" << endl;
 /*
@@ -297,7 +326,7 @@ void* mstParaleloThread(void *p){
 
 	      // Si otro thread me está fusionando, esperar a que termine.
 
-              		// Reinicializo las estructuras del thread y arranco de nuevo.
+              // Reinicializo las estructuras del thread y arranco de nuevo.
 
  	      // Si tiene elementos en la cola de fusion, debe fusionarlos.
 
