@@ -41,7 +41,7 @@ class Thread{
     void pintarNodo(int nodo, sharedData* shared);
     void pintarVecinos(Grafo* g, int num);
     void reiniciarThread(sharedData* shared);
-    Thread* initThread(sharedData* shared);
+    void initThread(sharedData* shared);
     void procesarNodo(int nodo, sharedData* shared);
     Thread tomarNodo(int nodo);
     void requestMerge(Thread* other, int source_node, int dest_node);
@@ -129,7 +129,7 @@ void Thread::reiniciarThread(sharedData* shared){
 
 
 // Iniciar un thread.
-Thread* Thread::initThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){ // TODO(charli): poner esto en void??
+void Thread::initThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){ // TODO(charli): poner esto en void??
 
     auto &nodesMutexes = shared->_nodesMutexes;
     auto &freeNodes = shared->_freeNodes;
@@ -137,13 +137,6 @@ Thread* Thread::initThread(sharedData* shared, unordered_map<pthread_t, Thread>*
 
     int node;
     bool nodeFound = false;
-
-
-    cout << "cantidad de nodos libres: " << freeNodes.size() << endl;
-    
-    
-    pthread_mutex_lock(&shared->_initMutex); // TODO(charli): agregar explicacion de por que usamos este mutex. deberiamos pedirlo tambien en otros lugares del codigo?
-
 
     // si no quedan nodos libres, se acabo la joda
     if(freeNodes.size() == 0) {
@@ -155,34 +148,16 @@ Thread* Thread::initThread(sharedData* shared, unordered_map<pthread_t, Thread>*
 
         // pido el mutex de ese Nodo
         pthread_mutex_lock(&nodesMutexes[node]);
-        cout << "pedi lock de nodo" << endl;
 
         // Si estuviera pintado
-        if(nodeColorArray[node] != -1) {
-            cout << "pido otro" << endl;
-            continue; // Pido otro
-        } else {
-            cout << "encontre nodo" << endl;
+        if(nodeColorArray[node] == -1) {
             nodeFound = true;
             procesarNodo(node, shared, threadObjects);
+            freeNodes.pop_back();
+            pthread_mutex_unlock(&nodesMutexes[node]);
         }
-
-        pthread_mutex_unlock(&nodesMutexes[node]);
+        
     }
-    nodeFound = false;
-    //cout << "Soy el proceso " << _threadCreationIdx << " y tomo el nodo " << freeNodes[nodePos] << " :) " << endl;
-    cout << "tomo el nodo " << node << endl;
-    // lo saco de freeNodes
-    freeNodes.pop_back();
-    pthread_mutex_unlock(&shared->_initMutex);
-
-    cout << "cantidad de nodos libres: " << freeNodes.size() << endl;
-
-    /*std::cout << "___________________________________________________________________________________" << '\n';
-    _mst.imprimirGrafo();
-    std::cout << "___________________________________________________________________________________" << '\n';
-    */  
-
 }
 
 void Thread::procesarNodo( int node, sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){
@@ -309,7 +284,7 @@ void* mstParaleloThread(void *p){
 
     pthread_mutex_unlock(&(shared->_mapMutex));
 
-    (*threadObjects)[tid].initThread(shared), threadObjects;
+    (*threadObjects)[tid].initThread((shared), threadObjects);
 
     cout << "defined initThread succesfully" << endl;
 /*
