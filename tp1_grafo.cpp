@@ -159,16 +159,18 @@ void Thread::initThread(sharedData* shared, unordered_map<pthread_t, Thread>* th
             nodeFound = true;
             Eje eje(-1, node, -1);
             procesarNodo(eje, shared, threadObjects);
-            shared->_freeNodes.pop_back();
         }
         pthread_mutex_unlock(&shared->_nodesMutexes[node]);
         
-    } 
+    }
+
 }
 
 // Iniciar un thread.
 void Thread::processThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){
     int i = 0;
+    cout << "Cantidad de nodos libres: " << shared->_freeNodes.size() << endl;
+    cout << endl;
     while(shared->_freeNodes.size() > 0){
       cout << "Iteración número: " << i << endl;
       cout << "Eje a agregar: " << getNextEdge().nodoOrigen << "---" << getNextEdge().nodoDestino << endl;
@@ -182,9 +184,10 @@ void Thread::processThread(sharedData* shared, unordered_map<pthread_t, Thread>*
         _mstEjes.pop();
       }
       procesarNodo(eje, shared, threadObjects);
+
+      i++;
       cout << "Cantidad de nodos libres: " << shared->_freeNodes.size() << endl;
       cout << endl;
-      i++;
     }
 }
 
