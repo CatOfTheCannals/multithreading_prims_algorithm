@@ -36,12 +36,10 @@ class Thread{
     int buscarNodo();
     void pintarNodo(int nodo, sharedData* shared);
     void pintarVecinos(Grafo* g, int num);
-    void reiniciarThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects);
-    void initThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects);
+    void reiniciarThread(sharedData* shared,  unordered_map<pthread_t, Thread*>* threadObjects);
+    void initThread(sharedData* shared,  unordered_map<pthread_t, Thread*>* threadObjects);
     void assignIdx(pthread_t threadCreationIdx);
-    pthread_t getIdx();
-    Grafo* getMst();
-    void procesarNodo(int dst_nodo, int src_node, sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects);
+    void procesarNodo(int nodo, sharedData* shared, unordered_map<pthread_t, Thread*>* threadObjects);
     Thread tomarNodo(int nodo);
     void requestMerge(Thread* other, int source_node, int dest_node);
     void merge(Thread* other, Grafo* g);
@@ -102,9 +100,12 @@ int Thread::buscarNodo(){
 
 // Se pinta el nodo de negro para indicar que fue colocado en el árbol
 void Thread::pintarNodo(int nodo, sharedData* shared){
-   // TODO
-  shared->_nodeColorArray[nodo] = _threadCreationIdx;
-   _mst.insertarNodo(nodo); //Inserto el nodo en el mst
+    
+    // asumo que el lock del nodo ya esta pedido
+    auto &nodeColorArray = shared->_nodeColorArray;
+    nodeColorArray[nodo] = _threadCreationIdx; // TODO(charli): sanitycheckear esto!!
+    
+    _mst.insertarNodo(nodo); //Inserto el nodo en el mst
 }
 
 // Se pintan los vecinos de gris para marcar que son alcanzables desde el árbol (salvo los que ya son del árbol)
@@ -118,95 +119,97 @@ void Thread::pintarVecinos(Grafo *g, int nodo){
 }
 
 //Reinicia las estructuras de un thread.
-void Thread::reiniciarThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){
+void Thread::reiniciarThread(sharedData* shared,  unordered_map<pthread_t, Thread*>* threadObjects){
     shared->_g->limpiarAuxiliares();
     initThread(shared, threadObjects);
 }
 
 
 // Iniciar un thread.
-void Thread::initThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){ // TODO(charli): poner esto en void??
+void Thread::initThread(sharedData* shared, unordered_map<pthread_t, Thread*>* threadObjects){ // TODO(charli): poner esto en void??
 
-  int node;
-  bool nodeFound = false;
+    auto &nodesMutexes = shared->_nodesMutexes;
+    auto &freeNodes = shared->_freeNodes;
+    auto &nodeColorArray = shared->_nodeColorArray;
 
-  // si no quedan nodos libres, se acabo la joda
-  if(shared->_freeNodes.size() == 0) {
-      pthread_exit(0);
-  }
+    int node;
+    bool nodeFound = false;
 
-  while(!nodeFound){    
-      node = shared->_freeNodes.back();
+    // si no quedan nodos libres, se acabo la joda
+    if(freeNodes.size() == 0) {
+        pthread_exit(0);
+    }
 
-      // pido el mutex de ese Nodo
-      pthread_mutex_lock(&shared->_nodesMutexes[node]);
+    while(!nodeFound){    
+        node = freeNodes.back();
 
-      // Veo que nadie lo haya pintado
-      if(shared->_nodeColorArray[node] == -1) {
-          nodeFound = true;
-          procesarNodo(0, node, shared, threadObjects);
-          shared->_freeNodes.pop_back();
-      }
-      pthread_mutex_unlock(&shared->_nodesMutexes[node]);
-      
-  } 
-}
+        // pido el mutex de ese Nodo
+        pthread_mutex_lock(&nodesMutexes[node]);
 
-void Thread::assignIdx(pthread_t threadCreationIdx){
-  _threadCreationIdx = threadCreationIdx;
-}
-
-void Thread::procesarNodo(int src_node, int dst_node, sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){
-
-    // TODO.
-    // Procurar pintar nodo.
-    pthread_t node_color = shared->_nodeColorArray[dst_node];
-
-    if(node_color == -1){
-      pintarNodo(dst_node,shared);
-      pintarVecinos(shared->_g, dst_node);
-    } else {
-      // Hay que mergear 
-      // Pido mi mutex para evitar que lleguen request mientras se resuelve mi merge
-      if(pthread_mutex_trylock(&shared->_nodesMutexes[_threadCreationIdx]) == 0){
-        bool busyWaiting = true;
-        while(busyWaiting){
-          if(pthread_mutex_trylock(&shared->_threadsMutexes[node_color]) == 0){
-            // Pude pedir el mutex del thread candidato a ser dueño 
-            if(node_color == shared->_nodeColorArray[dst_node]){
-              busyWaiting = false; 
-
-              // hacer request 
-              Thread other = (*threadObjects)[node_color];
-              requestMerge(&other, src_node, dst_node);
-
-              pthread_mutex_unlock(&shared->_threadsMutexes[node_color]);
-
-            } else {
-              // Actualizo con el nuevo dueño 
-              node_color == shared->_nodeColorArray[dst_node];
-            }
-          } else {
-            // Atiendo algo de mi cola porque podría estar esperándome a mi
-            if(_request_queue.size() > 0){
-              Thread* other = _request_queue.front().first;
-              merge(other, shared->_g);
-              _request_queue.pop();
-            } 
-          }
+        // Si estuviera pintado
+        if(nodeColorArray[node] == -1) {
+            nodeFound = true;
+            procesarNodo(node, shared, threadObjects);
+            freeNodes.pop_back();
+            pthread_mutex_unlock(&nodesMutexes[node]);
         }
-        pthread_mutex_unlock(&shared->_nodesMutexes[_threadCreationIdx]);        
-      }
-
+        
     }
 }
 
-pthread_t Thread::getIdx(){
-  return _threadCreationIdx;
+void Thread::assignIdx(pthread_t threadCreationIdx){
+    _threadCreationIdx = threadCreationIdx;
+    _merged = false;
 }
 
-Grafo* Thread::getMst(){
-  return &_mst;
+void Thread::procesarNodo(int node, sharedData* shared, unordered_map<pthread_t, Thread*>* threadObjects){
+
+    // asume que el nodo que se pasa fue lockeado previamente en el thread
+
+    auto &nodesMutexes = shared->_nodesMutexes;
+    auto &nodeColorArray = shared->_nodeColorArray;
+    auto &threadsMutexes = shared->_threadsMutexes;
+
+    // leer estado del nodo
+    auto node_color = nodeColorArray[node];
+
+    // si esta libre lo pinto asi nomas
+    if(node_color == -1) {
+        pintarNodo(node,shared);
+        pintarVecinos(shared->_g,node); // TODO(charli): ver que onda pintarVecinos
+    } else {
+        // si esta tomado hay que mergear
+        // Pido mi mutex para no tener request durante mi merge 
+        if(pthread_mutex_trylock(&threadsMutexes[_threadCreationIdx]) == 0) {
+            bool busyWaiting = true;
+            while(busyWaiting) {
+                // si el arbol al que me quiero mergear esta disponible, le mando request
+                if (pthread_mutex_trylock(&threadsMutexes[node_color]) == 0) {
+                    busyWaiting = false;
+
+                    Thread* other = (*threadObjects)[node_color];
+
+                    // TODO_IMPORTANTE(charli): tenemos que definir la logica para entender cual es el source_node
+                    //requestMerge(other, source_node, dest_node); 
+
+                    pthread_mutex_unlock (&threadsMutexes[node_color]);
+
+                }
+
+                else {
+                    // si tengo merges pendientes en mi cola los resuelvo y no mando request
+                
+                    if(_request_queue.size() > 0) {
+                        busyWaiting = false;
+                        Thread* other = _request_queue.front().first;
+                        merge(other, &_mst);
+                        _request_queue.pop();
+                    }
+                }
+            }
+            pthread_mutex_unlock (&threadsMutexes[_threadCreationIdx]); // TODO(charli): verificar esto
+        }
+    }
 }
 
 
@@ -222,7 +225,7 @@ void Thread::requestMerge(Thread* other, int source_node, int dest_node){
     // """TODO Se deben evitar race conditions, en los siguietes casos:
         // Un nodo hijo no puede estar en la cola de fusiones de otro nodo.
         // Solo se pueden agregar a la cola si el padre no está siendo fusionado por otro thread."""
-
+    
     other->_request_queue.push(make_pair((this), make_pair(source_node, dest_node)));
 
 }
@@ -248,9 +251,6 @@ void Thread::merge(Thread* other, Grafo *g){
         other->_request_queue.pop();
         other->_merged=true;
     }
-
-    //Se determina el thread que tengo que fusionar
-
     //Se espera a que el thread esté listo para fusionarse
 
     //Se fusionan las colas de fusiones del hijo
@@ -270,9 +270,9 @@ int buscarNodoLibre(){
 // Gestión principal del thread. Contiene el ciclo que le permite a cada thread hacer sus funciones.
 void* mstParaleloThread(void *p){
 
-    pair<unordered_map<pthread_t, Thread>, sharedData>* sharedPair = (pair<unordered_map<pthread_t, Thread>, sharedData>*) p;
+    pair<unordered_map<pthread_t, Thread*>, sharedData>* sharedPair = (pair<unordered_map<pthread_t, Thread*>, sharedData>*) p;
     sharedData* shared = &sharedPair->second;
-    unordered_map<pthread_t, Thread>* threadObjects = &sharedPair->first;
+    unordered_map<pthread_t, Thread*>* threadObjects = &sharedPair->first;
 
     // Se obtiene el numero de thread y se inicializan sus
 
@@ -280,31 +280,21 @@ void* mstParaleloThread(void *p){
 
     pthread_mutex_lock(&(shared->_mapMutex));
 
-    (*threadObjects)[tid] = Thread();
+    *(*threadObjects)[tid] = Thread();
 
-    (*threadObjects)[tid].assignIdx(tid);
-
-    cout << "Fui creado y mi tid es " << (*threadObjects)[tid].getIdx() << " jeje" << endl;
-    cout << "Mi tid es: " << (*threadObjects)[tid].getIdx() << " y veo al mapa de tamaño " << threadObjects->size() <<  endl;
+    cout << "Fui creado y mi tid es " << tid << " jeje" << endl;
+    //cout << "Mi tid es: " << tid << " y veo al mapa de tamaño " << threadObjects->size() <<  endl;
 
     pthread_mutex_unlock(&(shared->_mapMutex));
 
-    (*threadObjects)[tid].initThread(shared, threadObjects);
+    (*threadObjects)[tid]->initThread((shared), threadObjects);
+    (*threadObjects)[tid]->assignIdx(tid);
 
-    pthread_mutex_lock(&(shared->_initMutex));
 
-    cout << "Soy " << tid << " y mi árbol es el siguiente " << endl;
-
-    ((*threadObjects)[tid].getMst())->imprimirGrafo();
-
-    pthread_mutex_unlock(&(shared->_initMutex));
-    
-//    cout << "defined initThread succesfully" << endl;
+    cout << "defined initThread succesfully" << endl;
 /*
     // Ciclo principal de cada thread
     while(true){
-
-        break; // TODO(charli): sacar esto cuando agreguemos
 
         // Se termina la ejecución si el grafo ya no tiene vertices libres. Se imprime el resultado y se termina el thread
 
@@ -316,7 +306,7 @@ void* mstParaleloThread(void *p){
 
 	      // Si otro thread me está fusionando, esperar a que termine.
 
-              		// Reinicializo las estructuras del thread y arranco de nuevo.
+              // Reinicializo las estructuras del thread y arranco de nuevo.
 
  	      // Si tiene elementos en la cola de fusion, debe fusionarlos.
 
@@ -372,10 +362,9 @@ void mstParalelo(Grafo *g, int cantThreads){
     pthread_t threads[cantThreads];
     // Se inicializan las estructuras globales
 
-    unordered_map<pthread_t, Thread> threadObjects;
+    unordered_map<pthread_t, Thread*> threadObjects;
 
-    //TODO(charli): asegurarnos de que cada vez que un nodo es pintado o fagocitado, esto cambia
-    // tambien queremos que arranque inicializado en -1
+    // TODO(charli): asegurarnos de que cada vez que un nodo es pintado o fagocitado, esto cambia
     vector<pthread_t> nodeColorArray(g->numVertices, -1);
 
     vector<pthread_mutex_t> nodesMutexes(g->numVertices, PTHREAD_MUTEX_INITIALIZER);
@@ -395,11 +384,10 @@ void mstParalelo(Grafo *g, int cantThreads){
     shared._threadsMutexes = threadsMutexes;
     shared._freeNodes = freeNodes;
 
-    pair<unordered_map<pthread_t, Thread>, sharedData> pair = make_pair(threadObjects, shared);
-
+    pair<unordered_map<pthread_t, Thread*>, sharedData> pair = make_pair(threadObjects, shared);
     // Se deben usar pthread_create y pthread_join.
     for (int threadIdx = 0; threadIdx < cantThreads; ++threadIdx) {
-        pthread_create(&threads[threadIdx], NULL, mstParaleloThread, &pair); // TODO(charli): pasar todo lo que es memoria compartida
+        pthread_create(&threads[threadIdx], NULL, mstParaleloThread, &pair);
         //threadObjects[threadIdx] = Thread(threads[threadIdx], threadIdx);
     }
     for (int threadIdx = 0; threadIdx < cantThreads; ++threadIdx)
@@ -534,7 +522,7 @@ int test(string path){
   Grafo g;
   if( g.inicializar(path) == 1){
 
-          mstParalelo(&g, 5);
+          mstParalelo(&g, 1);
 
   }else{
     cerr << "Error: Grafo no cargado correctamente" << endl;
