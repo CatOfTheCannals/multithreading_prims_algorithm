@@ -10,7 +10,6 @@
 #define GRIS -20
 #define NEGRO -30
 
-
 using namespace std;
 
 typedef struct Eje {

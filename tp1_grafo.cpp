@@ -286,16 +286,16 @@ void Thread::merge(Thread* other, Grafo *g){
         other->_merged=true;
     }
 
-    //Se determina el thread que tengo que fusionar
+    // Se determina el thread que tengo que fusionar
 
-    //Se espera a que el thread esté listo para fusionarse
+    // Se espera a que el thread esté listo para fusionarse
 
-    //Se fusionan las colas de fusiones del hijo
+    // Se fusionan las colas de fusiones del hijo
 
-    //Se fusionan las distancias del hijo
+    // Se fusionan las distancias del hijo
         // esto es fusionar ejes
 
-    //Se notifica al hijo que se termino la fusion
+    // Se notifica al hijo que se termino la fusion
 }
 
 // Para buscar un nodo libre en el grafo.

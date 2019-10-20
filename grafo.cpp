@@ -12,9 +12,9 @@ int Grafo::inicializar(string nombreArchivo) {
     return 0;
   }
 
-  //Primera línea es la cantidad de vértices
+  // Primera línea es la cantidad de vértices
   archivo >> numVertices;
-  //La segunda la cantidad de ejes
+  // La segunda la cantidad de ejes
   int numEjesArchivo;
   archivo >> numEjesArchivo;
 
