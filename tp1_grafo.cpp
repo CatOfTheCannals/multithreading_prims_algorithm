@@ -127,29 +127,30 @@ void Thread::reiniciarThread(sharedData* shared, unordered_map<pthread_t, Thread
 // Iniciar un thread.
 void Thread::initThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){ // TODO(charli): poner esto en void??
 
-  int node;
-  bool nodeFound = false;
+    int node;
+    bool nodeFound = false;
+    while(true){
+        // si no quedan nodos libres, se acabo la joda
+        if(shared->_freeNodes.size() == 0) {
+            pthread_exit(0);
+        }
+        nodeFound=false;
+        while(!nodeFound){    
+            node = shared->_freeNodes.back();
 
-  // si no quedan nodos libres, se acabo la joda
-  if(shared->_freeNodes.size() == 0) {
-      pthread_exit(0);
-  }
+            // pido el mutex de ese Nodo
+            pthread_mutex_lock(&shared->_nodesMutexes[node]);
 
-  while(!nodeFound){    
-      node = shared->_freeNodes.back();
-
-      // pido el mutex de ese Nodo
-      pthread_mutex_lock(&shared->_nodesMutexes[node]);
-
-      // Veo que nadie lo haya pintado
-      if(shared->_nodeColorArray[node] == -1) {
-          nodeFound = true;
-          procesarNodo(0, node, shared, threadObjects);
-          shared->_freeNodes.pop_back();
-      }
-      pthread_mutex_unlock(&shared->_nodesMutexes[node]);
-      
-  } 
+            // Veo que nadie lo haya pintado
+            if(shared->_nodeColorArray[node] == -1) {
+                nodeFound = true;
+                procesarNodo(0, node, shared, threadObjects);
+                shared->_freeNodes.pop_back();
+            }
+            pthread_mutex_unlock(&shared->_nodesMutexes[node]);
+            
+        } 
+    }
 }
 
 void Thread::assignIdx(pthread_t threadCreationIdx){
@@ -482,7 +483,8 @@ void experimentacion(){
                     instancia++;
                     resetExperimentacion();
                 }
-                for (int threads = 2; threads <= 32; threads *= 2){
+                //for (int threads = 2; threads <= 32; threads *= 2){
+                for (int threads = 1; threads <2; threads *= 2){
                     if(k == 0){
                         grafo = "arbol";
                         auto start = std::chrono::steady_clock::now();
