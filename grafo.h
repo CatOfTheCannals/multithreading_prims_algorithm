@@ -14,14 +14,16 @@
 using namespace std;
 
 typedef struct Eje {
+  int nodoOrigen;
   int nodoDestino;
   int peso;
 
-  Eje(int nodoDestino, int peso) {
+  Eje(int nodoOrigen, int nodoDestino, int peso) {
+    this->nodoOrigen = nodoOrigen;
     this->nodoDestino = nodoDestino;
     this->peso = peso;
   }
-  Eje():nodoDestino(0), peso(0) {}
+  Eje():nodoOrigen(0), nodoDestino(0), peso(0) {}
   bool operator<(Eje other){
     return peso < other.peso;
   }

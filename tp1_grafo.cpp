@@ -43,9 +43,9 @@ class Thread{
     void initThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects);
     void assignIdx(pthread_t threadCreationIdx);
     pthread_t getIdx();
-    Eje getNextNode();
+    Eje getNextEdge();
     Grafo* getMst();
-    void procesarNodo(int dst_nodo, int src_node, sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects);
+    void procesarNodo(Eje eje, sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects);
     Thread tomarNodo(int nodo);
     void requestMerge(Thread* other, int source_node, int dest_node);
     void merge(Thread* other, Grafo* g);
@@ -147,7 +147,8 @@ void Thread::initThread(sharedData* shared, unordered_map<pthread_t, Thread>* th
         // Veo que nadie lo haya pintado
         if(shared->_nodeColorArray[node] == -1) {
             nodeFound = true;
-            procesarNodo(0, node, shared, threadObjects);
+            Eje eje(0, node, 0);
+            procesarNodo(eje, shared, threadObjects);
             shared->_freeNodes.pop_back();
         }
         pthread_mutex_unlock(&shared->_nodesMutexes[node]);
@@ -159,15 +160,15 @@ void Thread::assignIdx(pthread_t threadCreationIdx){
   _threadCreationIdx = threadCreationIdx;
 }
 
-void Thread::procesarNodo(int src_node, int dst_node, sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){
+void Thread::procesarNodo(Eje eje, sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){
 
     // TODO.
     // Procurar pintar nodo.
-    pthread_t node_color = shared->_nodeColorArray[dst_node];
+    pthread_t node_color = shared->_nodeColorArray[eje.nodoDestino];
 
     if(node_color == -1){
-      pintarNodo(dst_node,shared);
-      pintarVecinos(shared->_g, dst_node);
+      pintarNodo(eje.nodoDestino,shared);
+      pintarVecinos(shared->_g, eje.nodoDestino);
     } else {
       // Hay que mergear 
       // Pido mi mutex para evitar que lleguen request mientras se resuelve mi merge
@@ -176,18 +177,18 @@ void Thread::procesarNodo(int src_node, int dst_node, sharedData* shared, unorde
         while(busyWaiting){
           if(pthread_mutex_trylock(&shared->_threadsMutexes[node_color]) == 0){
             // Pude pedir el mutex del thread candidato a ser dueño 
-            if(node_color == shared->_nodeColorArray[dst_node]){
+            if(node_color == shared->_nodeColorArray[eje.nodoDestino]){
               busyWaiting = false; 
 
               // hacer request 
               Thread other = (*threadObjects)[node_color];
-              requestMerge(&other, src_node, dst_node);
+              requestMerge(&other, eje.nodoOrigen, eje.nodoDestino); // Cambiar para que tome el eje
 
               pthread_mutex_unlock(&shared->_threadsMutexes[node_color]);
 
             } else {
               // Actualizo con el nuevo dueño 
-              node_color == shared->_nodeColorArray[dst_node];
+              node_color == shared->_nodeColorArray[eje.nodoDestino];
             }
           } else {
             // Atiendo algo de mi cola porque podría estar esperándome a mi
@@ -212,7 +213,7 @@ Grafo* Thread::getMst(){
   return &_mst;
 }
 
-Eje Thread::getNextNode(){
+Eje Thread::getNextEdge(){
   return _mstEjes.top();
 }
 
@@ -307,16 +308,13 @@ void* mstParaleloThread(void *p){
     
     cout << "defined initThread succesfully" << endl;
 
-    cout << "Primer nodo a agregar: " << (*threadObjects)[tid].getNextNode().nodoDestino << endl;
-    cout << "Primer peso a agregar: " << (*threadObjects)[tid].getNextNode().peso << endl;
+    cout << "Eje a agregar: " << (*threadObjects)[tid].getNextEdge().nodoOrigen << "---" << (*threadObjects)[tid].getNextEdge().nodoDestino << endl;
+    cout << "Peso a agregar: " << (*threadObjects)[tid].getNextEdge().peso << endl;
 
-    /*while(1){
-      if(shared->_freeNodes.size() == 0){
-        break;
-      } else {
-
-      }
-    }*/
+    while(shared->_freeNodes.size() > 0){
+      (*threadObjects)[tid].getNextEdge();
+      break;
+    }
 /*
     // Ciclo principal de cada thread
     while(true){

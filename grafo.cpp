@@ -48,19 +48,22 @@ vector<Eje>::iterator Grafo::vecinosEnd(int num){
 
 void Grafo::insertarEje(int nodoA, int nodoB, int peso){
     //Agrego eje de nodoA a nodoB 
-    Eje ejeA(nodoB,peso);
+    Eje ejeA(nodoA,nodoB,peso);
     listaDeAdyacencias[nodoA].push_back(ejeA);
 
     //Agrego eje de nodoB a nodoA
-    Eje ejeB(nodoA,peso);
+    Eje ejeB(nodoB,nodoA,peso);
     listaDeAdyacencias[nodoB].push_back(ejeB);
 
     incrementarTotalEjes();
 }
 
-void Grafo::insertarNodo(int nodo){
+void Grafo::insertarNodo(int nodo){//} Eje* eje){
     //Creo el vector que será la lista de adyacencias del nodo
     vector<Eje> ejesN;
+    /*if(eje != NULL){
+         ejesN.push_back(*eje);
+    }*/
     //Inserto el par (nodo, lista) en el diccionario
     listaDeAdyacencias.insert({nodo, ejesN});
 
