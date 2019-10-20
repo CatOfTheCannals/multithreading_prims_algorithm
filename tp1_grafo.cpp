@@ -41,6 +41,7 @@ class Thread{
     void pintarVecinos(Grafo* g, int num);
     void reiniciarThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects);
     void initThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects);
+    void processThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects);
     void assignIdx(pthread_t threadCreationIdx);
     pthread_t getIdx();
     Eje getNextEdge();
@@ -154,6 +155,41 @@ void Thread::initThread(sharedData* shared, unordered_map<pthread_t, Thread>* th
         pthread_mutex_unlock(&shared->_nodesMutexes[node]);
         
     } 
+}
+
+// Iniciar un thread.
+void Thread::processThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){ // TODO(charli): poner esto en void??
+    while(true){
+        int node;
+        bool nodeFound = false;
+        // si no quedan nodos libres, se acabo la joda
+        if(shared->_freeNodes.size() == 0) {
+            _mst.imprimirGrafo();
+            pthread_exit(0);
+        }
+        nodeFound=false;
+        while(!nodeFound){    
+            node = _mstEjes.top().nodoDestino;
+
+            // pido el mutex de ese Nodo
+            pthread_mutex_lock(&shared->_nodesMutexes[node]);
+
+            // Veo que nadie lo haya pintado
+            if(shared->_nodeColorArray[node] == -1) {
+                nodeFound = true;
+                Eje eje(0, node, 0);
+                procesarNodo(eje, shared, threadObjects);
+                for (std::vector<int>::iterator it = shared->_freeNodes.begin() ; it != shared->_freeNodes.end(); ++it){
+                    if(*it==node){
+                        shared->_freeNodes.erase(it);
+                        break;
+                    }
+                }
+            }
+            _mstEjes.pop();
+            pthread_mutex_unlock(&shared->_nodesMutexes[node]);
+        } 
+    }
 }
 
 void Thread::assignIdx(pthread_t threadCreationIdx){
@@ -315,6 +351,7 @@ void* mstParaleloThread(void *p){
       (*threadObjects)[tid].getNextEdge();
       break;
     }
+    (*threadObjects)[tid].processThread(shared, threadObjects);
 /*
     // Ciclo principal de cada thread
     while(true){
