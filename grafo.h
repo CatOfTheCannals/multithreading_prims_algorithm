@@ -63,7 +63,7 @@ private:
 class Compare {
   public:
     bool operator() (Eje eje_1, Eje eje_2){
-      return eje_1 < eje_2;
+      return eje_1 > eje_2;
     }
 };
 

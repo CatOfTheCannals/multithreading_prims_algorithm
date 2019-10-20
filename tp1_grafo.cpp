@@ -15,6 +15,9 @@
 #include <queue>          // std::priority_queue
 
 
+#include <typeinfo>
+
+
 using namespace std;
 
 // Datos compartidos entre threads
@@ -40,6 +43,7 @@ class Thread{
     void initThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects);
     void assignIdx(pthread_t threadCreationIdx);
     pthread_t getIdx();
+    Eje getNextNode();
     Grafo* getMst();
     void procesarNodo(int dst_nodo, int src_node, sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects);
     Thread tomarNodo(int nodo);
@@ -129,28 +133,26 @@ void Thread::initThread(sharedData* shared, unordered_map<pthread_t, Thread>* th
 
     int node;
     bool nodeFound = false;
-    while(true){
-        // si no quedan nodos libres, se acabo la joda
-        if(shared->_freeNodes.size() == 0) {
-            pthread_exit(0);
-        }
-        nodeFound=false;
-        while(!nodeFound){    
-            node = shared->_freeNodes.back();
-
-            // pido el mutex de ese Nodo
-            pthread_mutex_lock(&shared->_nodesMutexes[node]);
-
-            // Veo que nadie lo haya pintado
-            if(shared->_nodeColorArray[node] == -1) {
-                nodeFound = true;
-                procesarNodo(0, node, shared, threadObjects);
-                shared->_freeNodes.pop_back();
-            }
-            pthread_mutex_unlock(&shared->_nodesMutexes[node]);
-            
-        } 
+    // si no quedan nodos libres, se acabo la joda
+    if(shared->_freeNodes.size() == 0) {
+        pthread_exit(0);
     }
+    nodeFound=false;
+    while(!nodeFound){    
+        node = shared->_freeNodes.back();
+
+        // pido el mutex de ese Nodo
+        pthread_mutex_lock(&shared->_nodesMutexes[node]);
+
+        // Veo que nadie lo haya pintado
+        if(shared->_nodeColorArray[node] == -1) {
+            nodeFound = true;
+            procesarNodo(0, node, shared, threadObjects);
+            shared->_freeNodes.pop_back();
+        }
+        pthread_mutex_unlock(&shared->_nodesMutexes[node]);
+        
+    } 
 }
 
 void Thread::assignIdx(pthread_t threadCreationIdx){
@@ -210,6 +212,9 @@ Grafo* Thread::getMst(){
   return &_mst;
 }
 
+Eje Thread::getNextNode(){
+  return _mstEjes.top();
+}
 
 // Trata de reservar el nodo que se pasa como parametro para el thread
 
@@ -285,8 +290,8 @@ void* mstParaleloThread(void *p){
 
     (*threadObjects)[tid].assignIdx(tid);
 
-    cout << "Fui creado y mi tid es " << (*threadObjects)[tid].getIdx() << " jeje" << endl;
-    cout << "Mi tid es: " << (*threadObjects)[tid].getIdx() << " y veo al mapa de tamaño " << threadObjects->size() <<  endl;
+    //cout << "Fui creado y mi tid es " << (*threadObjects)[tid].getIdx() << " jeje" << endl;
+    //cout << "Mi tid es: " << (*threadObjects)[tid].getIdx() << " y veo al mapa de tamaño " << threadObjects->size() <<  endl;
 
     pthread_mutex_unlock(&(shared->_mapMutex));
 
@@ -300,7 +305,18 @@ void* mstParaleloThread(void *p){
 
     pthread_mutex_unlock(&(shared->_initMutex));
     
-//    cout << "defined initThread succesfully" << endl;
+    cout << "defined initThread succesfully" << endl;
+
+    cout << "Primer nodo a agregar: " << (*threadObjects)[tid].getNextNode().nodoDestino << endl;
+    cout << "Primer peso a agregar: " << (*threadObjects)[tid].getNextNode().peso << endl;
+
+    /*while(1){
+      if(shared->_freeNodes.size() == 0){
+        break;
+      } else {
+
+      }
+    }*/
 /*
     // Ciclo principal de cada thread
     while(true){
@@ -536,7 +552,7 @@ int test(string path){
   Grafo g;
   if( g.inicializar(path) == 1){
 
-          mstParalelo(&g, 5);
+          mstParalelo(&g, 1);
 
   }else{
     cerr << "Error: Grafo no cargado correctamente" << endl;
