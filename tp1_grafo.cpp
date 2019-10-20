@@ -168,36 +168,23 @@ void Thread::initThread(sharedData* shared, unordered_map<pthread_t, Thread>* th
 
 // Iniciar un thread.
 void Thread::processThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){
-    while(true){
-        int node;
-        bool nodeFound = false;
-        // si no quedan nodos libres, se acabo la joda
-        if(shared->_freeNodes.size() == 0) {
-            _mst.imprimirGrafo();
-            pthread_exit(0);
-        }
-        nodeFound=false;
-        while(!nodeFound){    
-            node = _mstEjes.top().nodoDestino;
-
-            // pido el mutex de ese Nodo
-            pthread_mutex_lock(&shared->_nodesMutexes[node]);
-
-            // Veo que nadie lo haya pintado
-            if(shared->_nodeColorArray[node] == -1) {
-                nodeFound = true;
-                Eje eje(0, node, 0);
-                procesarNodo(eje, shared, threadObjects);
-                for (std::vector<int>::iterator it = shared->_freeNodes.begin() ; it != shared->_freeNodes.end(); ++it){
-                    if(*it==node){
-                        shared->_freeNodes.erase(it);
-                        break;
-                    }
-                }
-            }
-            _mstEjes.pop();
-            pthread_mutex_unlock(&shared->_nodesMutexes[node]);
-        } 
+    int i = 0;
+    while(shared->_freeNodes.size() > 0){
+      cout << "Iteración número: " << i << endl;
+      cout << "Eje a agregar: " << getNextEdge().nodoOrigen << "---" << getNextEdge().nodoDestino << endl;
+      cout << "Peso a agregar: " << getNextEdge().peso << endl;
+      Eje eje = getNextEdge();
+      _mstEjes.pop();
+      while(shared->_nodeColorArray[eje.nodoDestino] == _threadCreationIdx){
+        cout << "Eje a agregar: " << getNextEdge().nodoOrigen << "---" << getNextEdge().nodoDestino << endl;
+        cout << "Peso a agregar: " << getNextEdge().peso << endl;
+        eje = getNextEdge();
+        _mstEjes.pop();
+      }
+      procesarNodo(eje, shared, threadObjects);
+      cout << "Cantidad de nodos libres: " << shared->_freeNodes.size() << endl;
+      cout << endl;
+      i++;
     }
 }
 
@@ -356,26 +343,7 @@ void* mstParaleloThread(void *p){
       cout << (shared->_nodeColorArray[i] == -1) << endl;
     }
 
-    int i = 0;
-    while(shared->_freeNodes.size() > 0){
-      cout << "Iteración número: " << i << endl;
-      cout << "Eje a agregar: " << (*threadObjects)[tid].getNextEdge().nodoOrigen << "---" << (*threadObjects)[tid].getNextEdge().nodoDestino << endl;
-      cout << "Peso a agregar: " << (*threadObjects)[tid].getNextEdge().peso << endl;
-      Eje eje = (*threadObjects)[tid].getNextEdge();
-      (*threadObjects)[tid]._mstEjes.pop();
-      while(shared->_nodeColorArray[eje.nodoDestino] == tid){
-        cout << "Eje a agregar: " << (*threadObjects)[tid].getNextEdge().nodoOrigen << "---" << (*threadObjects)[tid].getNextEdge().nodoDestino << endl;
-        cout << "Peso a agregar: " << (*threadObjects)[tid].getNextEdge().peso << endl;
-        eje = (*threadObjects)[tid].getNextEdge();
-        (*threadObjects)[tid]._mstEjes.pop();
-      }
-      (*threadObjects)[tid].procesarNodo(eje, shared, threadObjects);
-      cout << "Cantidad de nodos libres: " << shared->_freeNodes.size() << endl;
-      cout << endl;
-      i++;
-    }
-
-    //(*threadObjects)[tid].processThread(shared, threadObjects);
+    (*threadObjects)[tid].processThread(shared, threadObjects);
 /*
     // Ciclo principal de cada thread
     while(true){
