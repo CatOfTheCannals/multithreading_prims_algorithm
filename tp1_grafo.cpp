@@ -113,7 +113,7 @@ void Thread::pintarNodo(Eje eje, sharedData* shared){
   while(shared->_freeNodes[pos] != eje.nodoDestino && pos < shared->_freeNodes.size()){
     pos++;
   }
-  cout << "Posición del nodo a brorrar " << pos << endl;
+  cout << "Posición del nodo a borrar " << pos << endl;
   if (pos < shared->_freeNodes.size()) shared->_freeNodes.erase(shared->_freeNodes.begin()+pos);
    _mst.insertarNodo(eje.nodoDestino); //Inserto el nodo en el mst
    if(eje.nodoOrigen != -1){
@@ -139,7 +139,7 @@ void Thread::reiniciarThread(sharedData* shared, unordered_map<pthread_t, Thread
 
 
 // Iniciar un thread.
-void Thread::initThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){ // TODO(charli): poner esto en void??
+void Thread::initThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){
 
     int node;
     bool nodeFound = false;
@@ -167,7 +167,7 @@ void Thread::initThread(sharedData* shared, unordered_map<pthread_t, Thread>* th
 }
 
 // Iniciar un thread.
-void Thread::processThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){ // TODO(charli): poner esto en void??
+void Thread::processThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){
     while(true){
         int node;
         bool nodeFound = false;
@@ -206,9 +206,6 @@ void Thread::assignIdx(pthread_t threadCreationIdx){
 }
 
 void Thread::procesarNodo(Eje eje, sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){
-
-    // TODO.
-    // Procurar pintar nodo.
     pthread_t node_color = shared->_nodeColorArray[eje.nodoDestino];
     cout << node_color << endl;
 
@@ -285,7 +282,7 @@ void Thread::requestMerge(Thread* other, int source_node, int dest_node){
 void Thread::merge(Thread* other, Grafo *g){
     other->_merged=false;
     //Se determina el thread que tengo que fusionar
-    if(_threadCreationIdx>other->_threadCreationIdx){
+    if(_threadCreationIdx > other->_threadCreationIdx){
         //Se fusiona a mi
         int nodo;
         while(!other->_mstEjes.empty()){
