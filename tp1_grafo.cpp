@@ -37,7 +37,7 @@ class Thread{
     Thread(){};
     Thread& operator=(Thread other);
     int buscarNodo();
-    void pintarNodo(int nodo, sharedData* shared);
+    void pintarNodo(Eje eje, sharedData* shared);
     void pintarVecinos(Grafo* g, int num);
     void reiniciarThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects);
     void initThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects);
@@ -105,10 +105,19 @@ int Thread::buscarNodo(){
 
 
 // Se pinta el nodo de negro para indicar que fue colocado en el árbol
-void Thread::pintarNodo(int nodo, sharedData* shared){
+void Thread::pintarNodo(Eje eje, sharedData* shared){
    // TODO
-  shared->_nodeColorArray[nodo] = _threadCreationIdx;
-   _mst.insertarNodo(nodo); //Inserto el nodo en el mst
+  shared->_nodeColorArray[eje.nodoDestino] = _threadCreationIdx;
+  int pos = 0;
+  while(shared->_freeNodes[pos] != eje.nodoDestino && pos < shared->_freeNodes.size()){
+    pos++;
+  }
+  cout << "Posición del nodo a brorrar " << pos << endl;
+  if (pos < shared->_freeNodes.size()) shared->_freeNodes.erase(shared->_freeNodes.begin()+pos);
+   _mst.insertarNodo(eje.nodoDestino); //Inserto el nodo en el mst
+   if(eje.nodoOrigen != -1){
+    _mst.insertarEje(eje.nodoOrigen, eje.nodoDestino, eje.peso);
+   }
 }
 
 // Se pintan los vecinos de gris para marcar que son alcanzables desde el árbol (salvo los que ya son del árbol)
@@ -147,7 +156,7 @@ void Thread::initThread(sharedData* shared, unordered_map<pthread_t, Thread>* th
         // Veo que nadie lo haya pintado
         if(shared->_nodeColorArray[node] == -1) {
             nodeFound = true;
-            Eje eje(0, node, 0);
+            Eje eje(-1, node, -1);
             procesarNodo(eje, shared, threadObjects);
             shared->_freeNodes.pop_back();
         }
@@ -165,9 +174,10 @@ void Thread::procesarNodo(Eje eje, sharedData* shared, unordered_map<pthread_t, 
     // TODO.
     // Procurar pintar nodo.
     pthread_t node_color = shared->_nodeColorArray[eje.nodoDestino];
+    cout << node_color << endl;
 
     if(node_color == -1){
-      pintarNodo(eje.nodoDestino,shared);
+      pintarNodo(eje,shared);
       pintarVecinos(shared->_g, eje.nodoDestino);
     } else {
       // Hay que mergear 
@@ -307,14 +317,33 @@ void* mstParaleloThread(void *p){
     pthread_mutex_unlock(&(shared->_initMutex));
     
     cout << "defined initThread succesfully" << endl;
-
-    cout << "Eje a agregar: " << (*threadObjects)[tid].getNextEdge().nodoOrigen << "---" << (*threadObjects)[tid].getNextEdge().nodoDestino << endl;
-    cout << "Peso a agregar: " << (*threadObjects)[tid].getNextEdge().peso << endl;
-
-    while(shared->_freeNodes.size() > 0){
-      (*threadObjects)[tid].getNextEdge();
-      break;
+    
+    cout << "Colores" << endl;
+    for (int i = 0; i < shared->_nodeColorArray.size(); ++i){
+      cout << (shared->_nodeColorArray[i] == -1) << endl;
     }
+
+    int i = 0;
+    while(shared->_freeNodes.size() > 0){
+      cout << "Iteración número: " << i << endl;
+      cout << "Eje a agregar: " << (*threadObjects)[tid].getNextEdge().nodoOrigen << "---" << (*threadObjects)[tid].getNextEdge().nodoDestino << endl;
+      cout << "Peso a agregar: " << (*threadObjects)[tid].getNextEdge().peso << endl;
+      Eje eje = (*threadObjects)[tid].getNextEdge();
+      (*threadObjects)[tid]._mstEjes.pop();
+      while(shared->_nodeColorArray[eje.nodoDestino] == tid){
+        cout << "Eje a agregar: " << (*threadObjects)[tid].getNextEdge().nodoOrigen << "---" << (*threadObjects)[tid].getNextEdge().nodoDestino << endl;
+        cout << "Peso a agregar: " << (*threadObjects)[tid].getNextEdge().peso << endl;
+        eje = (*threadObjects)[tid].getNextEdge();
+        (*threadObjects)[tid]._mstEjes.pop();
+      }
+      (*threadObjects)[tid].procesarNodo(eje, shared, threadObjects);
+      cout << "Cantidad de nodos libres: " << shared->_freeNodes.size() << endl;
+      cout << endl;
+      i++;
+    }
+
+
+
 /*
     // Ciclo principal de cada thread
     while(true){
