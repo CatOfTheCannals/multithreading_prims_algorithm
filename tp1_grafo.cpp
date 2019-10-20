@@ -107,18 +107,15 @@ int Thread::buscarNodo(){
 
 // Se pinta el nodo de negro para indicar que fue colocado en el árbol
 void Thread::pintarNodo(Eje eje, sharedData* shared){
-   // TODO
+
   shared->_nodeColorArray[eje.nodoDestino] = _threadCreationIdx;
-  int pos = 0;
-  while(shared->_freeNodes[pos] != eje.nodoDestino && pos < shared->_freeNodes.size()){
-    pos++;
-  }
-  cout << "Posición del nodo a borrar " << pos << endl;
-  if (pos < shared->_freeNodes.size()) shared->_freeNodes.erase(shared->_freeNodes.begin()+pos);
-   _mst.insertarNodo(eje.nodoDestino); //Inserto el nodo en el mst
-   if(eje.nodoOrigen != -1){
+  //auto pos = find(shared->_freeNodes.begin(), shared->_freeNodes.end(), eje.nodoDestino);
+  //cout << "Posición del nodo a borrar " << *pos << endl;
+  shared->_freeNodes.erase(find(shared->_freeNodes.begin(), shared->_freeNodes.end(), eje.nodoDestino));
+  _mst.insertarNodo(eje.nodoDestino); //Inserto el nodo en el mst
+  if(eje.nodoOrigen != -1){
     _mst.insertarEje(eje.nodoOrigen, eje.nodoDestino, eje.peso);
-   }
+  }
 }
 
 // Se pintan los vecinos de gris para marcar que son alcanzables desde el árbol (salvo los que ya son del árbol)
@@ -159,16 +156,18 @@ void Thread::initThread(sharedData* shared, unordered_map<pthread_t, Thread>* th
             nodeFound = true;
             Eje eje(-1, node, -1);
             procesarNodo(eje, shared, threadObjects);
-            shared->_freeNodes.pop_back();
         }
         pthread_mutex_unlock(&shared->_nodesMutexes[node]);
         
-    } 
+    }
+
 }
 
 // Iniciar un thread.
 void Thread::processThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){
     int i = 0;
+    cout << "Cantidad de nodos libres: " << shared->_freeNodes.size() << endl;
+    cout << endl;
     while(shared->_freeNodes.size() > 0){
       cout << "Iteración número: " << i << endl;
       cout << "Eje a agregar: " << getNextEdge().nodoOrigen << "---" << getNextEdge().nodoDestino << endl;
@@ -182,9 +181,10 @@ void Thread::processThread(sharedData* shared, unordered_map<pthread_t, Thread>*
         _mstEjes.pop();
       }
       procesarNodo(eje, shared, threadObjects);
+
+      i++;
       cout << "Cantidad de nodos libres: " << shared->_freeNodes.size() << endl;
       cout << endl;
-      i++;
     }
 }
 
