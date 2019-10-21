@@ -159,9 +159,7 @@ void Thread::initThread(sharedData* shared, unordered_map<pthread_t, Thread>* th
             procesarNodo(eje, shared, threadObjects);
         }
         pthread_mutex_unlock(&shared->_nodesMutexes[node]);
-        
     }
-
 }
 
 // Iniciar un thread.
@@ -577,11 +575,11 @@ void experimentacion(){
 
 }
 
-int test(string path){
+int test(string path, int cantThreads){
   Grafo g;
   if( g.inicializar(path) == 1){
 
-          mstParalelo(&g, 1);
+          mstParalelo(&g, cantThreads);
 
   }else{
     cerr << "Error: Grafo no cargado correctamente" << endl;
@@ -603,7 +601,7 @@ int main(int argc, char const * argv[]) {
     }
 
     if (string(argv[1]) == "-t"){
-        test(argv[2]);
+        test(argv[2], atoi(argv[3]));
         return 0;
     }
 
