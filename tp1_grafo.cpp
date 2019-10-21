@@ -25,7 +25,8 @@ struct sharedData{
     Grafo* _g;  // Grafo a cubrir
     vector<pthread_t> _nodeColorArray;
     vector<pthread_mutex_t> _nodesMutexes;
-    vector<pthread_mutex_t> _threadsMutexes;
+    //vector<pthread_mutex_t> _threadsMutexes;
+    unordered_map<pthread_t, pthread_mutex_t> _threadsMutexes;
     vector<int> _freeNodes;
     pthread_mutex_t _mapMutex = PTHREAD_MUTEX_INITIALIZER;
     pthread_mutex_t _initMutex = PTHREAD_MUTEX_INITIALIZER;
@@ -203,10 +204,10 @@ void Thread::procesarNodo(Eje eje, sharedData* shared, unordered_map<pthread_t, 
     } else {
       // Hay que mergear 
       // Pido mi mutex para evitar que lleguen request mientras se resuelve mi merge
-      if(pthread_mutex_trylock(&shared->_nodesMutexes[_threadCreationIdx]) == 0){
+      if(pthread_mutex_trylock(&shared->_threadsMutexes.at(_threadCreationIdx)) == 0){
         bool busyWaiting = true;
         while(busyWaiting){
-          if(pthread_mutex_trylock(&shared->_threadsMutexes[node_color]) == 0){
+          if(pthread_mutex_trylock(&shared->_threadsMutexes.at(node_color)) == 0){
             // Pude pedir el mutex del thread candidato a ser dueño 
             if(node_color == shared->_nodeColorArray[eje.nodoDestino]){
               busyWaiting = false; 
@@ -215,7 +216,7 @@ void Thread::procesarNodo(Eje eje, sharedData* shared, unordered_map<pthread_t, 
               Thread other = (*threadObjects)[node_color];
               requestMerge(&other, eje.nodoOrigen, eje.nodoDestino); // Cambiar para que tome el eje
 
-              pthread_mutex_unlock(&shared->_threadsMutexes[node_color]);
+              pthread_mutex_unlock(&shared->_threadsMutexes.at(node_color));
 
             } else {
               // Actualizo con el nuevo dueño 
@@ -315,7 +316,7 @@ void* mstParaleloThread(void *p){
     // Se obtiene el numero de thread y se inicializan sus
 
     pthread_t tid = pthread_self();
-
+    shared->_threadsMutexes.insert({tid,PTHREAD_MUTEX_INITIALIZER});
     pthread_mutex_lock(&(shared->_mapMutex));
 
     (*threadObjects)[tid] = Thread();
@@ -424,7 +425,7 @@ void mstParalelo(Grafo *g, int cantThreads){
     vector<pthread_t> nodeColorArray(g->numVertices, -1);
 
     vector<pthread_mutex_t> nodesMutexes(g->numVertices, PTHREAD_MUTEX_INITIALIZER);
-    vector<pthread_mutex_t> threadsMutexes(cantThreads, PTHREAD_MUTEX_INITIALIZER);
+    //vector<pthread_mutex_t> threadsMutexes(cantThreads, PTHREAD_MUTEX_INITIALIZER);
 
     vector<int> freeNodes(g->numVertices);
 
@@ -437,7 +438,7 @@ void mstParalelo(Grafo *g, int cantThreads){
     //shared._threadObjects = threadObjects;
     shared._nodeColorArray = nodeColorArray;
     shared._nodesMutexes = nodesMutexes;
-    shared._threadsMutexes = threadsMutexes;
+    // shared._threadsMutexes = threadsMutexes;
     shared._freeNodes = freeNodes;
 
     pair<unordered_map<pthread_t, Thread>, sharedData> pair = make_pair(threadObjects, shared);
@@ -527,8 +528,8 @@ void experimentacion(){
                     instancia++;
                     resetExperimentacion();
                 }
-                //for (int threads = 2; threads <= 32; threads *= 2){
-                for (int threads = 1; threads <2; threads *= 2){
+                for (int threads = 2; threads <= 32; threads *= 2){
+                //for (int threads = 1; threads <2; threads *= 2){
                     if(k == 0){
                         grafo = "arbol";
                         auto start = std::chrono::steady_clock::now();
