@@ -1,0 +1,20 @@
+Mi tid es: 140705920874240 y veo al mapa de tamaño 1
+defined initThread succesfully
+
+Soy 140705920874240 y veo este puntero de threadObjects 0x7fffcbd8a1c0
+
+Printeando el grafo obtenido por el thread ganador
+	0: - (1,4) - (4,2) - 
+	1: - (2,8) - (0,4) - 
+	2: - (8,2) - (5,4) - (3,6) - (1,8) - 
+	3: - (2,6) - 
+	4: - (0,2) - 
+	5: - (2,4) - (6,2) - 
+	6: - (5,2) - (7,1) - 
+	7: - (6,1) - 
+	8: - (2,2) - 
+Cantidad de nodos: 9
+Cantidad de ejes: 8
+Peso del arbol: 29
+El grafo es conexo
+Mi tid es: 140705912481536 y veo al mapa de tamaño 2
