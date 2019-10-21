@@ -46,6 +46,10 @@ vector<Eje>::iterator Grafo::vecinosEnd(int num){
   return listaDeAdyacencias[num].end();
 }
 
+void Grafo::insertarEje(Eje e){
+    insertarEje(e.nodoOrigen, e.nodoDestino, e.peso);
+}
+
 void Grafo::insertarEje(int nodoA, int nodoB, int peso){
     //Agrego eje de nodoA a nodoB 
     Eje ejeA(nodoA,nodoB,peso);
@@ -134,12 +138,4 @@ bool Grafo::esConexo(){
         }
     }
     return nodosPintados == numVertices;
-}
-
-void Grafo::limpiarAuxiliares(){
-  //Aca van a ir los auxiliares a crear
-  listaNodosLibres.clear();
-  for(int i=0;i<numVertices;i++){
-    // listaNodosLibres.push_back(atomic_bool{ false }&);
-  }
 }

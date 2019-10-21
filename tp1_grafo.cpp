@@ -131,7 +131,6 @@ void Thread::pintarVecinos(Grafo *g, int nodo){
 
 //Reinicia las estructuras de un thread.
 void Thread::reiniciarThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){
-    shared->_g->limpiarAuxiliares();
     initThread(shared, threadObjects);
 }
 
@@ -264,34 +263,45 @@ void Thread::requestMerge(Thread* other, int source_node, int dest_node){
 // Realizar la fusión
 void Thread::merge(Thread* other, Grafo *g){
     other->_merged=false;
-    //Se determina el thread que tengo que fusionar
-    if(_threadCreationIdx > other->_threadCreationIdx){
-        //Se fusiona a mi
-        int nodo;
-        while(!other->_mstEjes.empty()){
-            nodo=other->_mstEjes.top().nodoDestino;
-            for (int i = 0; i < g->listaDeAdyacencias[nodo].size(); i++) {
-                if(_mst.noEsta(g->listaDeAdyacencias[nodo][i].nodoDestino)){
-                    _mstEjes.push(other->_mstEjes.top());
-                }
-                other->_mstEjes.pop();
-            }
-        }
-        _request_queue.push(other->_request_queue.front()); // TODO(charli): esta bien que esta operacion de push solo se haga una vez?
-        other->_request_queue.pop();
-        other->_merged=true;
+    if(_threadCreationIdx > other->_threadCreationIdx){ 
+      // yo ingiero al other, me copio sus weas
+
+      // nodos
+      for (auto const& x : other->_mst.listaDeAdyacencias){
+          _mst.insertarNodo(x.first);
+      }
+
+      // ejes del mst
+      for (auto const& x : other->_mst.listaDeAdyacencias){
+          auto listaDeEjes = x.second;
+          for (auto const& e : listaDeEjes){
+              _mst.insertarEje(e); // TODO(charli): verificar que esta asignacion no se haga mierda cuando vaciamos other
+          }
+      }
+
+      // pisar lista de adyacencias de other
+      map<int,vector<Eje>> nuevaListaDeAdyacencias;
+      other->_mst.listaDeAdyacencias = nuevaListaDeAdyacencias;
+
+      // ejes a explorar
+      // priority_queue<int, vector<Eje>, Compare > _mstEjes;
+      while(other->_mstEjes.size() > 0){
+          _mstEjes.push(other->_mstEjes.top());
+          other->_mstEjes.pop();
+      }
+
+      // requests
+      // queue<pair<Thread*, pair<int,int> > > _request_queue;
+      while(other->_request_queue.size() > 0){
+          _request_queue.push(other->_request_queue.front());
+          other->_request_queue.pop();
+      }
+
+      other->_merged=true;
+
+    } else { // TODO(charli): implementar la funcion fagocitar
+
     }
-
-    // Se determina el thread que tengo que fusionar
-
-    // Se espera a que el thread esté listo para fusionarse
-
-    // Se fusionan las colas de fusiones del hijo
-
-    // Se fusionan las distancias del hijo
-        // esto es fusionar ejes
-
-    // Se notifica al hijo que se termino la fusion
 }
 
 // Para buscar un nodo libre en el grafo.

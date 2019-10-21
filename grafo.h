@@ -39,8 +39,6 @@ public:
 
   map<int,vector<Eje>> listaDeAdyacencias;
 
-  vector<atomic_bool*> listaNodosLibres;
-
   Grafo() {
     numVertices = 0;
     numEjes = 0;
@@ -51,6 +49,7 @@ public:
   bool esConexo();
   vector<Eje>::iterator vecinosBegin(int num);
   vector<Eje>::iterator vecinosEnd(int num);
+  void insertarEje(Eje e);
   void insertarEje(int nodoA, int nodoB, int peso);
   void insertarNodo(int nodo);
   bool noEsta(int nodo);
