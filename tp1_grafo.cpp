@@ -205,8 +205,10 @@ void Thread::procesarNodo(Eje eje, sharedData* shared, unordered_map<pthread_t, 
             if(node_color == shared->_nodeColorArray[eje.nodoDestino]){
               busyWaiting = false; 
 
-              // hacer request 
+              // hacer request
               Thread other = (*threadObjects)[node_color];
+
+              // TODO(charli): quedarse esperando hasta que el merge sea resuelto
               requestMerge(&other, eje.nodoOrigen, eje.nodoDestino); // Cambiar para que tome el eje
 
               pthread_mutex_unlock(&shared->_threadsMutexes.at(node_color));
