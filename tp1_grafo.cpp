@@ -169,22 +169,23 @@ void Thread::processThread(sharedData* shared, unordered_map<pthread_t, Thread>*
     cout << "Cantidad de nodos libres: " << shared->_freeNodes.size() << endl;
     cout << endl;
     while(shared->_freeNodes.size() > 0){
-      cout << "Iteración número: " << i << endl;
-      cout << "Eje a agregar: " << getNextEdge().nodoOrigen << "---" << getNextEdge().nodoDestino << endl;
-      cout << "Peso a agregar: " << getNextEdge().peso << endl;
       Eje eje = getNextEdge();
       _mstEjes.pop();
       while(shared->_nodeColorArray[eje.nodoDestino] == _threadCreationIdx){
-        cout << "Eje a agregar: " << getNextEdge().nodoOrigen << "---" << getNextEdge().nodoDestino << endl;
-        cout << "Peso a agregar: " << getNextEdge().peso << endl;
         eje = getNextEdge();
         _mstEjes.pop();
       }
       procesarNodo(eje, shared, threadObjects);
 
       i++;
-      cout << "Cantidad de nodos libres: " << shared->_freeNodes.size() << endl;
-      cout << endl;
+
+    }
+
+    if(getMst()->numVertices == shared->_g->numVertices){ // thread contiene todos los nodos del grafo ==> thread ganador
+        // TODO(charli): ver cual es el formato de output que se espera
+        cout << endl;
+        cout << "Printeando el grafo obtenido por el thread ganador" << endl;
+        getMst()->imprimirGrafo();
     }
 }
 

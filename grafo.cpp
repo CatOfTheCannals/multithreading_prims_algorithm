@@ -94,7 +94,6 @@ void Grafo::imprimirGrafo() {
       }
   }
 
-
   for (auto v = listaDeAdyacencias.begin() ; v != listaDeAdyacencias.end(); ++v) {
     cout << "\t" << v->first << ": - ";
     for(const Eje &Eje : v->second) {
