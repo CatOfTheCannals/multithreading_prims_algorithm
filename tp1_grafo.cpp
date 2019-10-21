@@ -164,7 +164,6 @@ void Thread::initThread(sharedData* shared, unordered_map<pthread_t, Thread>* th
 
 // Iniciar un thread.
 void Thread::processThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){
-    int i = 0;
     cout << "Cantidad de nodos libres: " << shared->_freeNodes.size() << endl;
     cout << endl;
     while(shared->_freeNodes.size() > 0){
@@ -175,9 +174,6 @@ void Thread::processThread(sharedData* shared, unordered_map<pthread_t, Thread>*
         _mstEjes.pop();
       }
       procesarNodo(eje, shared, threadObjects);
-
-      i++;
-
     }
 
     if(getMst()->numVertices == shared->_g->numVertices){ // thread contiene todos los nodos del grafo ==> thread ganador
