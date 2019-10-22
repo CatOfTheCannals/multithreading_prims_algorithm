@@ -59,7 +59,7 @@ class Thread{
     priority_queue<int, vector<Eje>, Compare > _mstEjes;
     Grafo _mst;
     pthread_t _threadCreationIdx;
-    queue<pair<Thread*, pair<int,int> > > _request_queue;
+    queue<pair<Thread*, pair<int,int> > > _request_queue; //TODO(charli): agregar eje como segundo elem
     bool _merged;
 };
 
@@ -165,7 +165,6 @@ void Thread::initThread(sharedData* shared, unordered_map<pthread_t, Thread>* th
 
 // Iniciar un thread.
 void Thread::processThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){
-    cout << "Soy " << _threadCreationIdx << " y veo este puntero de threadObjects " << threadObjects << endl;
     while(_mst.numVertices < shared->_g->numVertices){
       Eje eje = getNextEdge();
       _mstEjes.pop();
@@ -178,6 +177,7 @@ void Thread::processThread(sharedData* shared, unordered_map<pthread_t, Thread>*
       procesarNodo(eje, shared, threadObjects);
       pthread_mutex_unlock(&shared->_nodesMutexes[eje.nodoDestino]);
       if(_request_queue.size() > 0){
+        merge(_request_queue.front().first, shared->_g);
         // Pido front de _request_queue 
         // Hago el llamado correspondiente a merge => En merge hay que:
         // 1) Hacer pop de _request_queue 
@@ -273,13 +273,14 @@ void Thread::requestMerge(Thread* other, int source_node, int dest_node){
         // Solo se pueden agregar a la cola si el padre no está siendo fusionado por otro thread."""
     cout << "Espero por " << other->_threadCreationIdx << " y soy " << _threadCreationIdx << endl;
     other->_request_queue.push(make_pair((this), make_pair(source_node, dest_node)));
-    cout << "Tamaño del mapa de " << other->_threadCreationIdx << " es " << other->_request_queue.size() << endl;
 
 }
 
 
 // Realizar la fusión
 void Thread::merge(Thread* other, Grafo *g){
+    cout << "Mi tid es: " << _threadCreationIdx << " y me pinta mergear " << endl;
+    while(1){}
     other->_merged=false; // Habría que setearlo en true al final para avisarle al otro thread que terminó el merge
     if(_threadCreationIdx > other->_threadCreationIdx){ 
       // yo ingiero al other, me copio sus weas
@@ -345,16 +346,11 @@ void* mstParaleloThread(void *p){
 
     (*threadObjects)[tid].assignIdx(tid);
 
-    //cout << "Fui creado y mi tid es " << (*threadObjects)[tid].getIdx() << " jeje" << endl;
-    cout << "Mi tid es: " << (*threadObjects)[tid].getIdx() << " y veo al mapa de tamaño " << threadObjects->size() <<  endl;
-
     pthread_mutex_unlock(&(shared->_mapMutex));
 
     pthread_mutex_lock(&(shared->_initMutex));
 
     (*threadObjects)[tid].initThread(shared, threadObjects);
-
-    //cout << "Soy " << tid << " y mi árbol es el siguiente " << endl;
 
     //((*threadObjects)[tid].getMst())->imprimirGrafo();
 
