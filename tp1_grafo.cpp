@@ -47,6 +47,7 @@ class Thread{
     void processThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects);
     void fagocitar(Thread* other, Grafo *g);
     void assignIdx(pthread_t threadCreationIdx);
+    void msgLog(string msg);
     pthread_t getIdx();
     Eje getNextEdge(sharedData* shared);
     Grafo* getMst();
@@ -161,6 +162,7 @@ void Thread::initThread(sharedData* shared, unordered_map<pthread_t, Thread>* th
         node = shared->_freeNodes.back();
         //cout << "Paso 9: Listo" << endl;
         // pido el mutex de ese Nodo
+        msgLog("lock init");
         pthread_mutex_lock(&shared->_nodesMutexes[node]);
         //cout << "Paso 10: Listo" << endl;
 
@@ -173,12 +175,13 @@ void Thread::initThread(sharedData* shared, unordered_map<pthread_t, Thread>* th
             procesarNodo(eje, shared, threadObjects);
         }
         pthread_mutex_unlock(&shared->_nodesMutexes[node]);
+        msgLog("unlock init");
     }
 }
 
-/*void Thread::log(string log){
-    cout << "tid: " << _threadCreationIdx << " " << string << endl << endl;
-}*/
+void Thread::msgLog(string msg){
+    cout << "tid: " + to_string((unsigned long)_threadCreationIdx) + " " + msg << endl;
+}
 
 // Iniciar un thread.
 void Thread::processThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){
@@ -186,12 +189,14 @@ void Thread::processThread(sharedData* shared, unordered_map<pthread_t, Thread>*
     while(_mst.numVertices < shared->_g->numVertices){
       Eje eje = !procesado ? getNextEdge(shared) : eje;
       // cout << "consegui eje: " << eje.nodoOrigen << "----" << eje.nodoDestino << endl;
+      msgLog("lock processThread nodo color " + to_string(shared->_nodeColorArray[eje.nodoDestino]));
       pthread_mutex_lock(&shared->_nodesMutexes.at(eje.nodoDestino));
       procesado = procesarNodo(eje, shared, threadObjects);
       pthread_mutex_unlock(&shared->_nodesMutexes.at(eje.nodoDestino));
+      msgLog("unlock processThread");
 
       if(_request_queue.size() > 0){
-        //cout << "voy a mergear naturalmente" << endl;
+        msgLog(" resuelvo merge");
         merge(_request_queue.front().first, shared->_g);
       }
     }
@@ -223,10 +228,14 @@ bool Thread::procesarNodo(Eje eje, sharedData* shared, unordered_map<pthread_t, 
     } else {
       // Hay que mergear 
       // Pido mi mutex para evitar que lleguen request mientras se resuelve mi merge
-      
+
+      msgLog("trylock1 procesarNodo");
       if(pthread_mutex_trylock(&shared->_threadsMutexes.at(_threadCreationIdx)) == 0){
+        msgLog("lock1 procesarNodo");
+
         //cout << "Lock 1: " << _threadCreationIdx << endl;
         if(pthread_mutex_trylock(&shared->_threadsMutexes.at(node_color)) == 0){
+          msgLog("lock2 procesarNodo");
           //cout << "Lock 2: " << node_color << endl;
           // Pude pedir el mutex del thread candidato a ser dueño 
           if(node_color == shared->_nodeColorArray.at(eje.nodoDestino)){
@@ -242,6 +251,7 @@ bool Thread::procesarNodo(Eje eje, sharedData* shared, unordered_map<pthread_t, 
           }
         }
         pthread_mutex_unlock(&shared->_threadsMutexes.at(_threadCreationIdx));
+        msgLog("unlock2 procesarNodo");
       }
 
       _merged = false;
@@ -282,11 +292,12 @@ void Thread::requestMerge(sharedData* shared, Thread* other, int source_node, in
     //cout << "Espero por " << other->_threadCreationIdx << " y soy " << _threadCreationIdx << endl;
     other->_request_queue.push(make_pair((this), make_pair(source_node, dest_node)));
     pthread_mutex_unlock(&shared->_threadsMutexes.at(other->_threadCreationIdx));
+    msgLog("unlock1 procesarNodo");
 
 }
 
 void Thread::fagocitar(Thread* other, Grafo *g){
-    cout << "soy el thread " << _threadCreationIdx << " COMIENZA EL HOMICIDIO" << endl;
+    cout << "soy el thread " << _threadCreationIdx << " FAGOCITO" << endl;
     // nodos
     for (auto const& x : other->_mst.listaDeAdyacencias){
         _mst.insertarNodo(x.first);
@@ -323,7 +334,7 @@ void Thread::fagocitar(Thread* other, Grafo *g){
 
 // Realizar la fusión
 void Thread::merge(Thread* other, Grafo *g){
-    cout << "Mi tid es: " << _threadCreationIdx << " y me pinta mergear " << endl;
+    msgLog(" mergeo");
     other->_merged=false; // Habría que setearlo en true al final para avisarle al otro thread que terminó el merge
     if(_threadCreationIdx > other->_threadCreationIdx){ 
       // yo ingiero al other
