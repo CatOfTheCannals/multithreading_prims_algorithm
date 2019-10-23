@@ -208,7 +208,9 @@ void Thread::procesarNodo(Eje eje, sharedData* shared, unordered_map<pthread_t, 
       bool busyWaiting = true;
       while(busyWaiting && !_merged){
         if(pthread_mutex_trylock(&shared->_threadsMutexes.at(_threadCreationIdx)) == 0){
+          //cout << "Lock 1: " << _threadCreationIdx << endl;
           if(pthread_mutex_trylock(&shared->_threadsMutexes.at(node_color)) == 0){
+            //cout << "Lock 2: " << node_color << endl;
             // Pude pedir el mutex del thread candidato a ser dueño 
             if(node_color == shared->_nodeColorArray.at(eje.nodoDestino)){
               busyWaiting = false; 
@@ -344,7 +346,9 @@ void* mstParaleloThread(void *p){
     // Se obtiene el numero de thread y se inicializan sus
 
     pthread_t tid = pthread_self();
-    shared->_threadsMutexes.insert({tid,PTHREAD_MUTEX_INITIALIZER});
+    pthread_mutex_t mu;
+    shared->_threadsMutexes.insert({tid,mu});
+    pthread_mutex_init(&shared->_threadsMutexes.at(tid), NULL);
     pthread_mutex_lock(&(shared->_mapMutex));
 
     (*threadObjects)[tid] = Thread();
@@ -438,13 +442,17 @@ void mstParalelo(Grafo *g, int cantThreads){
     // Se inicializan las estructuras globales
 
     unordered_map<pthread_t, Thread> threadObjects;
+    unordered_map<pthread_t, pthread_mutex_t> threadsMutexes;
 
     //TODO(charli): asegurarnos de que cada vez que un nodo es pintado o fagocitado, esto cambia
     // tambien queremos que arranque inicializado en -1
     vector<pthread_t> nodeColorArray(g->numVertices, -1);
 
-    vector<pthread_mutex_t> nodesMutexes(g->numVertices, PTHREAD_MUTEX_INITIALIZER);
-    //vector<pthread_mutex_t> threadsMutexes(cantThreads, PTHREAD_MUTEX_INITIALIZER);
+    vector<pthread_mutex_t> nodesMutexes(g->numVertices);
+    for (int i = 0; i < nodesMutexes.size(); ++i){
+      pthread_mutex_init(&nodesMutexes.at(i), NULL);
+    }
+    
 
     vector<int> freeNodes(g->numVertices);
 
@@ -457,7 +465,7 @@ void mstParalelo(Grafo *g, int cantThreads){
     //shared._threadObjects = threadObjects;
     shared._nodeColorArray = nodeColorArray;
     shared._nodesMutexes = nodesMutexes;
-    // shared._threadsMutexes = threadsMutexes;
+    shared._threadsMutexes = threadsMutexes;
     shared._freeNodes = freeNodes;
 
     pair<unordered_map<pthread_t, Thread>, sharedData> pair = make_pair(threadObjects, shared);
