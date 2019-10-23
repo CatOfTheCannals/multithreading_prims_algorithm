@@ -19,7 +19,7 @@ int Grafo::inicializar(string nombreArchivo) {
   archivo >> numEjesArchivo;
 
   listaDeAdyacencias = map<int,vector<Eje>>();
-
+  cout << "Número de aristas: " << numEjesArchivo << endl;
   int v1, v2, peso;
   // Crear los ejes entre ambos nodos
   for(int ejes = 0; ejes < numEjesArchivo; ejes++){
@@ -33,7 +33,7 @@ int Grafo::inicializar(string nombreArchivo) {
 
     insertarEje(v1,v2,peso);
   }
-
+  cout << "Estoy creando el grafo y el tamaño del mapa es: " << listaDeAdyacencias.size() << endl;
   archivo.close();
   return 1;
 }
