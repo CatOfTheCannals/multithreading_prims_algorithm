@@ -164,16 +164,15 @@ void Thread::initThread(sharedData* shared, unordered_map<pthread_t, Thread>* th
     }
 }
 
+void Thread::log(string log){
+    cout << "tid: " << _threadCreationIdx << " " << string << endl << endl;
+}
+
 // Iniciar un thread.
 void Thread::processThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){
     while(_mst.numVertices < shared->_g->numVertices){
       Eje eje = getNextEdge();
-      _mstEjes.pop();
-      //cout << "Soy " << _threadCreationIdx << endl;
-      while(shared->_nodeColorArray[eje.nodoDestino] == _threadCreationIdx){
-        eje = getNextEdge();
-        _mstEjes.pop();
-      }
+      cout << "consegui eje :D" << endl;
       pthread_mutex_lock(&shared->_nodesMutexes[eje.nodoDestino]);
       procesarNodo(eje, shared, threadObjects);
       pthread_mutex_unlock(&shared->_nodesMutexes[eje.nodoDestino]);
@@ -250,7 +249,13 @@ Grafo* Thread::getMst(){
 }
 
 Eje Thread::getNextEdge(){
-  return _mstEjes.top();
+    Eje e = _mstEjes.top();
+    _mstEjes.pop();
+    while(shared->_nodeColorArray[eje.nodoDestino] == _threadCreationIdx){
+      eje = _mstEjes.top();
+      _mstEjes.pop();
+    }
+  return e;
 }
 
 // Trata de reservar el nodo que se pasa como parametro para el thread
@@ -273,6 +278,7 @@ void Thread::requestMerge(sharedData* shared, Thread* other, int source_node, in
 
 void Thread::fagocitar(Thread* other, Grafo *g){
     cout << "soy el thread " << _threadCreationIdx << " COMIENZA EL HOMICIDIO" << endl;
+    while(1){}
     // nodos
     for (auto const& x : other->_mst.listaDeAdyacencias){
         _mst.insertarNodo(x.first);
