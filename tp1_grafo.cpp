@@ -120,18 +120,18 @@ void Thread::pintarNodo(Eje eje, sharedData* shared){
   if(eje.nodoOrigen != -1){
     _mst.insertarEje(eje.nodoOrigen, eje.nodoDestino, eje.peso);
   }
-  cout << "Estoy en pintarNodo y el tamaño del mapa es: " << shared->_g->listaDeAdyacencias.size() << endl;
+  //cout << "Estoy en pintarNodo y el tamaño del mapa es: " << shared->_g->listaDeAdyacencias.size() << endl;
 
 }
 
 // Se pintan los vecinos de gris para marcar que son alcanzables desde el árbol (salvo los que ya son del árbol)
 void Thread::pintarVecinos(Grafo *g, int nodo){
    //Agrego todas las aristas que salen del nodo insertado y no apuntan a algún otro nodo de los que ya están en el mst
-   cout << "Paso 16: Listo" << endl;
-   //cout << "Estoy en pintarVecinos y el tamaño del mapa es: " << g->listaDeAdyacencias[0].size() << endl;
+   //cout << "Paso 16: Listo" << endl;
+   ////cout << "Estoy en pintarVecinos y el tamaño del mapa es: " << g->listaDeAdyacencias[0].size() << endl;
 
    for (int i = 0; i < g->listaDeAdyacencias[nodo].size(); i++) {
-    cout << "Paso 17: Listo" << endl;
+    //cout << "Paso 17: Listo" << endl;
 
     if(_mst.noEsta(g->listaDeAdyacencias[nodo].at(i).nodoDestino)){
       _mstEjes.push(g->listaDeAdyacencias[nodo].at(i));
@@ -154,22 +154,22 @@ void Thread::initThread(sharedData* shared, unordered_map<pthread_t, Thread>* th
     if(shared->_freeNodes.size() == 0) {
         pthread_exit(0);
     }
-    cout << "Paso 8: Listo" << endl;
+    //cout << "Paso 8: Listo" << endl;
 
     nodeFound=false;
     while(!nodeFound){
         node = shared->_freeNodes.back();
-        cout << "Paso 9: Listo" << endl;
+        //cout << "Paso 9: Listo" << endl;
         // pido el mutex de ese Nodo
         pthread_mutex_lock(&shared->_nodesMutexes[node]);
-        cout << "Paso 10: Listo" << endl;
+        //cout << "Paso 10: Listo" << endl;
 
         // Veo que nadie lo haya pintado
         if(shared->_nodeColorArray[node] == -1) {
             nodeFound = true;
-            cout << "Paso 11: Listo" << endl;
+            //cout << "Paso 11: Listo" << endl;
             Eje eje(-1, node, -1);
-            cout << "Paso 12: Listo" << endl;
+            //cout << "Paso 12: Listo" << endl;
             procesarNodo(eje, shared, threadObjects);
         }
         pthread_mutex_unlock(&shared->_nodesMutexes[node]);
@@ -208,14 +208,14 @@ void Thread::assignIdx(pthread_t threadCreationIdx){
 }
 
 void Thread::procesarNodo(Eje eje, sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){
-      cout << "Estoy en procesarNodo y el tamaño del mapa es: " << shared->_g->listaDeAdyacencias.size() << endl;
+      //cout << "Estoy en procesarNodo y el tamaño del mapa es: " << shared->_g->listaDeAdyacencias.size() << endl;
 
     pthread_t node_color = shared->_nodeColorArray[eje.nodoDestino];
-    cout << "Paso 13: Listo" << endl;
+    //cout << "Paso 13: Listo" << endl;
     if(node_color == -1){
-      cout << "Paso 14: Listo" << endl;
+      //cout << "Paso 14: Listo" << endl;
       pintarNodo(eje,shared);
-      cout << "Paso 15: Listo" << endl;
+      //cout << "Paso 15: Listo" << endl;
       pintarVecinos(shared->_g, eje.nodoDestino);
     } else {
       // Hay que mergear 
@@ -360,13 +360,13 @@ void* mstParaleloThread(void *p){
     unordered_map<pthread_t, Thread>* threadObjects = &sharedPair->first;
 
     // Se obtiene el numero de thread y se inicializan sus
-    cout << "Paso 2: Listo" << endl;
+    //cout << "Paso 2: Listo" << endl;
 
     pthread_t tid = pthread_self();
     pthread_mutex_t mu;
     shared->_threadsMutexes.insert({tid,mu});
     pthread_mutex_init(&shared->_threadsMutexes.at(tid), NULL);
-    cout << "Paso 3: Listo" << endl;
+    //cout << "Paso 3: Listo" << endl;
 
     pthread_mutex_lock(&(shared->_mapMutex));
 
@@ -374,19 +374,19 @@ void* mstParaleloThread(void *p){
 
     (*threadObjects)[tid] = Thread();
 
-    cout << "Paso 4: Listo" << endl;
+    //cout << "Paso 4: Listo" << endl;
 
     (*threadObjects).at(tid).assignIdx(tid);
 
-    cout << "Paso 5: Listo" << endl;
+    //cout << "Paso 5: Listo" << endl;
 
     pthread_mutex_unlock(&(shared->_mapMutex));
 
-    cout << "Paso 6: Listo" << endl;
+    //cout << "Paso 6: Listo" << endl;
 
     pthread_mutex_lock(&(shared->_initMutex));
 
-    cout << "Paso 7: Listo" << endl;
+    //cout << "Paso 7: Listo" << endl;
 
     (*threadObjects).at(tid).initThread(shared, threadObjects);
 
@@ -450,7 +450,7 @@ void* mstParaleloThread(void *p){
 void mstParalelo(Grafo *g, int cantThreads){
 
     //Verificar cantidad de threads para ejecutar el algoritmo
-    cout << "Estoy en mstParalelo y el tamaño del mapa es: " << g->listaDeAdyacencias.size() << endl;
+    //cout << "Estoy en mstParalelo y el tamaño del mapa es: " << g->listaDeAdyacencias.size() << endl;
     if(cantThreads < 1){
         cerr << "El número de threads debe ser igual o mayor a 1" << endl;
     }
@@ -498,7 +498,7 @@ void mstParalelo(Grafo *g, int cantThreads){
     shared._freeNodes = freeNodes;
 
     pair<unordered_map<pthread_t, Thread>, sharedData> pair = make_pair(threadObjects, shared);
-    cout << "Paso 1: Listo" << endl;
+    //cout << "Paso 1: Listo" << endl;
     // Se deben usar pthread_create y pthread_join.
     for (int threadIdx = 0; threadIdx < cantThreads; ++threadIdx) {
         pthread_create(&threads[threadIdx], NULL, mstParaleloThread, &pair); // TODO(charli): pasar todo lo que es memoria compartida
