@@ -48,7 +48,7 @@ class Thread{
     void fagocitar(Thread* other, Grafo *g);
     void assignIdx(pthread_t threadCreationIdx);
     pthread_t getIdx();
-    Eje getNextEdge();
+    Eje getNextEdge(sharedData* shared);
     Grafo* getMst();
     void procesarNodo(Eje eje, sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects);
     Thread tomarNodo(int nodo);
@@ -125,9 +125,9 @@ void Thread::pintarNodo(Eje eje, sharedData* shared){
 // Se pintan los vecinos de gris para marcar que son alcanzables desde el árbol (salvo los que ya son del árbol)
 void Thread::pintarVecinos(Grafo *g, int nodo){
    //Agrego todas las aristas que salen del nodo insertado y no apuntan a algún otro nodo de los que ya están en el mst
-   for (int i = 0; i < g->listaDeAdyacencias[nodo].size(); i++) {
-     if(_mst.noEsta(g->listaDeAdyacencias[nodo][i].nodoDestino)){
-       _mstEjes.push(g->listaDeAdyacencias[nodo][i]);
+   for (int i = 0; i < g->listaDeAdyacencias.at(nodo).size(); i++) {
+     if(_mst.noEsta(g->listaDeAdyacencias.at(nodo).at(i).nodoDestino)){
+       _mstEjes.push(g->listaDeAdyacencias.at(nodo).at(i));
      }
    }
 }
@@ -164,20 +164,21 @@ void Thread::initThread(sharedData* shared, unordered_map<pthread_t, Thread>* th
     }
 }
 
-void Thread::log(string log){
+/*void Thread::log(string log){
     cout << "tid: " << _threadCreationIdx << " " << string << endl << endl;
-}
+}*/
 
 // Iniciar un thread.
 void Thread::processThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){
     while(_mst.numVertices < shared->_g->numVertices){
-      Eje eje = getNextEdge();
-      cout << "consegui eje :D" << endl;
-      pthread_mutex_lock(&shared->_nodesMutexes[eje.nodoDestino]);
+      Eje eje = getNextEdge(shared);
+      //cout << "consegui eje: " << eje.nodoOrigen << "----" << eje.nodoDestino << endl;
+      pthread_mutex_lock(&shared->_nodesMutexes.at(eje.nodoDestino));
       procesarNodo(eje, shared, threadObjects);
-      pthread_mutex_unlock(&shared->_nodesMutexes[eje.nodoDestino]);
+      pthread_mutex_unlock(&shared->_nodesMutexes.at(eje.nodoDestino));
+
       if(_request_queue.size() > 0){
-        cout << "voy a mergear naturalmente" << endl;
+        //cout << "voy a mergear naturalmente" << endl;
         merge(_request_queue.front().first, shared->_g);
       }
     }
@@ -209,11 +210,11 @@ void Thread::procesarNodo(Eje eje, sharedData* shared, unordered_map<pthread_t, 
         if(pthread_mutex_trylock(&shared->_threadsMutexes.at(_threadCreationIdx)) == 0){
           if(pthread_mutex_trylock(&shared->_threadsMutexes.at(node_color)) == 0){
             // Pude pedir el mutex del thread candidato a ser dueño 
-            if(node_color == shared->_nodeColorArray[eje.nodoDestino]){
+            if(node_color == shared->_nodeColorArray.at(eje.nodoDestino)){
               busyWaiting = false; 
 
               // hacer request
-              Thread* other = &(*threadObjects)[node_color];
+              Thread* other = &(*threadObjects).at(node_color);
 
               // TODO(charli): quedarse esperando hasta que el merge sea resuelto
               requestMerge(shared, other, eje.nodoOrigen, eje.nodoDestino); // Cambiar para que tome el eje
@@ -223,7 +224,7 @@ void Thread::procesarNodo(Eje eje, sharedData* shared, unordered_map<pthread_t, 
 
             } else {
               // Actualizo con el nuevo dueño 
-              node_color == shared->_nodeColorArray[eje.nodoDestino];
+              node_color == shared->_nodeColorArray.at(eje.nodoDestino);
             }
           } else {
             // Atiendo algo de mi cola porque podría estar esperándome a mi
@@ -233,7 +234,7 @@ void Thread::procesarNodo(Eje eje, sharedData* shared, unordered_map<pthread_t, 
               _request_queue.pop();
             } 
           }
-          pthread_mutex_unlock(&shared->_nodesMutexes[_threadCreationIdx]);        
+          pthread_mutex_unlock(&shared->_threadsMutexes.at(_threadCreationIdx));        
         }
       }
       _merged = false;
@@ -248,14 +249,14 @@ Grafo* Thread::getMst(){
   return &_mst;
 }
 
-Eje Thread::getNextEdge(){
-    Eje e = _mstEjes.top();
+Eje Thread::getNextEdge(sharedData* shared){
+    Eje eje = _mstEjes.top();
     _mstEjes.pop();
-    while(shared->_nodeColorArray[eje.nodoDestino] == _threadCreationIdx){
+    while(shared->_nodeColorArray.at(eje.nodoDestino) == _threadCreationIdx){
       eje = _mstEjes.top();
       _mstEjes.pop();
     }
-  return e;
+  return eje;
 }
 
 // Trata de reservar el nodo que se pasa como parametro para el thread
@@ -270,7 +271,7 @@ void Thread::requestMerge(sharedData* shared, Thread* other, int source_node, in
     // """TODO Se deben evitar race conditions, en los siguietes casos:
         // Un nodo hijo no puede estar en la cola de fusiones de otro nodo.
         // Solo se pueden agregar a la cola si el padre no está siendo fusionado por otro thread."""
-    cout << "Espero por " << other->_threadCreationIdx << " y soy " << _threadCreationIdx << endl;
+    //cout << "Espero por " << other->_threadCreationIdx << " y soy " << _threadCreationIdx << endl;
     other->_request_queue.push(make_pair((this), make_pair(source_node, dest_node)));
     pthread_mutex_unlock(&shared->_threadsMutexes.at(other->_threadCreationIdx));
 
@@ -348,13 +349,13 @@ void* mstParaleloThread(void *p){
 
     (*threadObjects)[tid] = Thread();
 
-    (*threadObjects)[tid].assignIdx(tid);
+    (*threadObjects).at(tid).assignIdx(tid);
 
     pthread_mutex_unlock(&(shared->_mapMutex));
 
     pthread_mutex_lock(&(shared->_initMutex));
 
-    (*threadObjects)[tid].initThread(shared, threadObjects);
+    (*threadObjects).at(tid).initThread(shared, threadObjects);
 
     //((*threadObjects)[tid].getMst())->imprimirGrafo();
 
