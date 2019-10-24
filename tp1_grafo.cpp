@@ -281,7 +281,7 @@ Eje Thread::getNextEdge(sharedData* shared){
       }
     }
     msgLog("¿son iguales? => " + to_string(shared->_nodeColorArray.at(eje.nodoDestino) == _threadCreationIdx ));
-  return eje;
+    return eje;
 }
 
 // Trata de reservar el nodo que se pasa como parametro para el thread
@@ -341,6 +341,8 @@ void Thread::fagocitar(Thread* other, sharedData* shared, unordered_map<pthread_
         shared->_nodeColorArray[i] = _threadCreationIdx;
       }
     }
+
+    other->_mst = Grafo();
 
     other->reiniciarThread(shared, threadObjects);
 
