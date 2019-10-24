@@ -63,6 +63,7 @@ class Thread{
     pthread_t _threadCreationIdx;
     queue<pair<Thread*, pair<int,int> > > _request_queue; //TODO(charli): agregar eje como segundo elem
     bool _merged;
+    bool _needRestart=false;
 };
 
 
@@ -248,9 +249,14 @@ bool Thread::procesarNodo(Eje eje, sharedData* shared, unordered_map<pthread_t, 
             Thread* other = &(*threadObjects).at(node_color);
 
             // TODO(charli): quedarse esperando hasta que el merge sea resuelto
+            cout <<"Soy" << _threadCreationIdx << "y requesteo Merge"<<endl;
             requestMerge(shared, other, eje.nodoOrigen, eje.nodoDestino); // Cambiar para que tome el eje
 
             while(!_merged){
+            }
+            if(_needRestart){
+                _needRestart=false;
+                reiniciarThread(shared, threadObjects);
             }
           }
         }
@@ -304,7 +310,7 @@ void Thread::requestMerge(sharedData* shared, Thread* other, int source_node, in
 }
 
 void Thread::fagocitar(Thread* other, sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){
-    cout << "soy el thread " << _threadCreationIdx << " FAGOCITO" << endl;
+    cout << "soy el thread " << _threadCreationIdx << " FAGOCITO A " <<other->_threadCreationIdx <<endl;
     // nodos
     for (auto const& x : other->_mst.listaDeAdyacencias){
         _mst.insertarNodo(x.first);
@@ -341,23 +347,33 @@ void Thread::fagocitar(Thread* other, sharedData* shared, unordered_map<pthread_
         shared->_nodeColorArray[i] = _threadCreationIdx;
       }
     }
+    if(pthread_self()!=other->_threadCreationIdx){
+        //Estoy usando el codigo de other para fagocitar, so el otro espera en el while
+        other->_needRestart=true;
+        other->_merged=true;
+        other->_mst = Grafo();
+    }else{
+        other->_merged=true;
+        _merged=true;
+        reiniciarThread(shared, threadObjects);
+    }
 
-    other->_mst = Grafo();
-
-    other->reiniciarThread(shared, threadObjects);
-
-    other->_merged=true;
 }
 
 // Realizar la fusión
 void Thread::merge(Thread* other, sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){
     msgLog(" mergeo");
     other->_merged=false; // Habría que setearlo en true al final para avisarle al otro thread que terminó el merge
+
+    //No me importa si es el o yo, el merge que estoy por hacer lo saco de la cola, porque lo estoy mergeando
+    _request_queue.pop();
     if(_threadCreationIdx > other->_threadCreationIdx){ 
       // yo ingiero al other
+      cout <<"Yo soy el mergeador original"<<endl;
       fagocitar(other, shared, threadObjects);
 
     } else {
+        cout <<"Yo soy el que requesteo merge y anda en el while"<<endl;
         // el other me ingiere cual globulo blanco a bacteria oprimida
         other->fagocitar(this, shared, threadObjects);
     }
