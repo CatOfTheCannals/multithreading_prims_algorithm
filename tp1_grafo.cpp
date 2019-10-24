@@ -45,7 +45,7 @@ class Thread{
     void reiniciarThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects);
     void initThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects);
     void processThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects);
-    void fagocitar(Thread* other, sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects);
+    void fagocitar(Thread* other, Eje eje, sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects);
     void assignIdx(pthread_t threadCreationIdx);
     void msgLog(string msg);
     pthread_t getIdx();
@@ -53,17 +53,16 @@ class Thread{
     Grafo* getMst();
     bool procesarNodo(Eje eje, sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects);
     Thread tomarNodo(int nodo);
-    void requestMerge(sharedData* shared, Thread* other, int source_node, int dest_node);
-    void merge(Thread* other, sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects);
+    void requestMerge(sharedData* shared, Thread* other, Eje eje);
+    void merge(pair<Thread*, Eje> req, sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects);
     friend void swap(Thread& lhs, Thread& rhs);
 
 
     priority_queue<int, vector<Eje>, Compare > _mstEjes;
     Grafo _mst;
     pthread_t _threadCreationIdx;
-    queue<pair<Thread*, pair<int,int> > > _request_queue; //TODO(charli): agregar eje como segundo elem
+    queue<pair<Thread*, Eje > > _request_queue; //TODO(charli): agregar eje como segundo elem
     bool _merged;
-    bool _needRestart=false;
 };
 
 
@@ -153,13 +152,14 @@ void Thread::initThread(sharedData* shared, unordered_map<pthread_t, Thread>* th
     int node;
     bool nodeFound = false;
     // si no quedan nodos libres, se acabo la joda
-    if(shared->_freeNodes.size() == 0) {
-        pthread_exit(0);
-    }
+
     //cout << "Paso 8: Listo" << endl;
 
     nodeFound=false;
     while(!nodeFound){
+        if(shared->_freeNodes.size() == 0) {
+            pthread_exit(0);
+        }
         node = shared->_freeNodes.back();
         //cout << "Paso 9: Listo" << endl;
         // pido el mutex de ese Nodo
@@ -202,7 +202,7 @@ void Thread::processThread(sharedData* shared, unordered_map<pthread_t, Thread>*
 
       if(_request_queue.size() > 0){
         msgLog(" resuelvo merge");
-        merge(_request_queue.front().first, shared, threadObjects);
+        merge(_request_queue.front(), shared, threadObjects);
       }
 
     }
@@ -249,14 +249,9 @@ bool Thread::procesarNodo(Eje eje, sharedData* shared, unordered_map<pthread_t, 
             Thread* other = &(*threadObjects).at(node_color);
 
             // TODO(charli): quedarse esperando hasta que el merge sea resuelto
-            cout <<"Soy" << _threadCreationIdx << "y requesteo Merge"<<endl;
-            requestMerge(shared, other, eje.nodoOrigen, eje.nodoDestino); // Cambiar para que tome el eje
+            requestMerge(shared, other, eje); // Cambiar para que tome el eje
 
             while(!_merged){
-            }
-            if(_needRestart){
-                _needRestart=false;
-                reiniciarThread(shared, threadObjects);
             }
           }
         }
@@ -298,21 +293,27 @@ Thread Thread::tomarNodo(int nodo){
 }
 
 // Procurar agregar el thread con mayor id a la cola de fusiones del thread con menor id
-void Thread::requestMerge(sharedData* shared, Thread* other, int source_node, int dest_node){
+void Thread::requestMerge(sharedData* shared, Thread* other, Eje eje){
     // """TODO Se deben evitar race conditions, en los siguietes casos:
         // Un nodo hijo no puede estar en la cola de fusiones de otro nodo.
         // Solo se pueden agregar a la cola si el padre no está siendo fusionado por otro thread."""
     //cout << "Espero por " << other->_threadCreationIdx << " y soy " << _threadCreationIdx << endl;
-    other->_request_queue.push(make_pair((this), make_pair(source_node, dest_node)));
+    other->_request_queue.push(make_pair((this), eje) );
     pthread_mutex_unlock(&shared->_threadsMutexes.at(other->_threadCreationIdx));
     msgLog("unlock1 procesarNodo");
 
 }
 
-void Thread::fagocitar(Thread* other, sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){
-    cout << "soy el thread " << _threadCreationIdx << " FAGOCITO A " <<other->_threadCreationIdx <<endl;
+void Thread::fagocitar(Thread* other, Eje eje, sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){
+    cout << "soy el thread " << _threadCreationIdx << " FAGOCITO" << endl;
+    cout << "Me pasaron el eje " << eje.nodoOrigen << "----" << eje.nodoDestino << endl;
+    cout << "Mi grafo " << endl;
+    _mst.imprimirGrafo();
+    cout << "El grafo de other " << endl;
+    other->_mst.imprimirGrafo();
     // nodos
     for (auto const& x : other->_mst.listaDeAdyacencias){
+        cout << "Inserto nodo " << x.first << endl;
         _mst.insertarNodo(x.first);
     }
 
@@ -320,9 +321,12 @@ void Thread::fagocitar(Thread* other, sharedData* shared, unordered_map<pthread_
     for (auto x : other->_mst.listaDeAdyacencias){
         auto listaDeEjes = x.second;
         for (auto  e : listaDeEjes){
+            cout << "Inserto eje " << e.nodoOrigen << "----" << e.nodoDestino << endl;
             _mst.insertarEje(e); // TODO(charli): verificar que esta asignacion no se haga mierda cuando vaciamos other
         }
     }
+
+    _mst.insertarEje(eje.nodoOrigen, eje.nodoDestino, eje.peso);
 
     // pisar lista de adyacencias de other
     map<int,vector<Eje>> nuevaListaDeAdyacencias;
@@ -347,35 +351,30 @@ void Thread::fagocitar(Thread* other, sharedData* shared, unordered_map<pthread_
         shared->_nodeColorArray[i] = _threadCreationIdx;
       }
     }
-    if(pthread_self()!=other->_threadCreationIdx){
-        //Estoy usando el codigo de other para fagocitar, so el otro espera en el while
-        other->_needRestart=true;
-        other->_merged=true;
-        other->_mst = Grafo();
-    }else{
-        other->_merged=true;
-        _merged=true;
-        reiniciarThread(shared, threadObjects);
-    }
 
+    other->_mst = Grafo();
+
+    other->reiniciarThread(shared, threadObjects);
+
+    cout << "Mi grafo al final " << endl;
+    _mst.imprimirGrafo();
+    cout << "El grafo de other al final " << endl;
+    other->_mst.imprimirGrafo();
+
+    other->_merged=true;
 }
 
 // Realizar la fusión
-void Thread::merge(Thread* other, sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){
+void Thread::merge(pair<Thread*, Eje> req, sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){
     msgLog(" mergeo");
-    other->_merged=false; // Habría que setearlo en true al final para avisarle al otro thread que terminó el merge
-
-    //No me importa si es el o yo, el merge que estoy por hacer lo saco de la cola, porque lo estoy mergeando
-    _request_queue.pop();
-    if(_threadCreationIdx > other->_threadCreationIdx){ 
+    //other->_merged=false; // Habría que setearlo en true al final para avisarle al otro thread que terminó el merge
+    if(_threadCreationIdx > req.first->_threadCreationIdx){ 
       // yo ingiero al other
-      cout <<"Yo soy el mergeador original"<<endl;
-      fagocitar(other, shared, threadObjects);
+      fagocitar(req.first, req.second, shared, threadObjects);
 
     } else {
-        cout <<"Yo soy el que requesteo merge y anda en el while"<<endl;
         // el other me ingiere cual globulo blanco a bacteria oprimida
-        other->fagocitar(this, shared, threadObjects);
+        req.first->fagocitar(this, req.second, shared, threadObjects);
     }
 }
 
@@ -443,11 +442,11 @@ void* mstParaleloThread(void *p){
 
         // TO DO
 
-	      // Si otro thread me está fusionando, esperar a que termine.
+        // Si otro thread me está fusionando, esperar a que termine.
 
-              		// Reinicializo las estructuras del thread y arranco de nuevo.
+                  // Reinicializo las estructuras del thread y arranco de nuevo.
 
- 	      // Si tiene elementos en la cola de fusion, debe fusionarlos.
+        // Si tiene elementos en la cola de fusion, debe fusionarlos.
 
              // Se busca el nodo más cercano que no esté en el árbol, pero que sea alcanzable
                   // nodoActual = buscarNodo(thread);
@@ -456,7 +455,7 @@ void* mstParaleloThread(void *p){
 
                  // Thread info = tomarNodo(nodoActual, thread);
 
-	     //Si se logra tomar, se procesa.
+       //Si se logra tomar, se procesa.
 
              //Si el nodo lo tiene otro thread, se tiene que fusionar
 
@@ -680,7 +679,7 @@ int test(string path, int cantThreads){
 int main(int argc, char const * argv[]) {
 
     if(argc <= 1){
-    	cerr << "Introduzca el nombre del archivo o el parámetro \"-e\" para hacer varias pruebas " << endl;
+      cerr << "Introduzca el nombre del archivo o el parámetro \"-e\" para hacer varias pruebas " << endl;
         return 1;
     }
 
@@ -712,9 +711,10 @@ int main(int argc, char const * argv[]) {
             mstParalelo(&g, threads);
 
     }else{
-	    cerr << "Error: Grafo no cargado correctamente" << endl;
+      cerr << "Error: Grafo no cargado correctamente" << endl;
         return 1;
     }
 
   return 0;
 }
+
