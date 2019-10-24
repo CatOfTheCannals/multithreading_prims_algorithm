@@ -186,29 +186,32 @@ void Thread::msgLog(string msg){
 
 // Iniciar un thread.
 void Thread::processThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){
-    bool procesado = false;
+    bool procesado = true;
     Eje eje = getNextEdge(shared);
     while(_mst.numVertices < shared->_g->numVertices){
 
       
       msgLog("conseguí eje: " + to_string(eje.nodoOrigen) + "----" + to_string(eje.nodoDestino) + " y el color del nodo destino es " + to_string((long)shared->_nodeColorArray[eje.nodoDestino]) );
       if(shared->_nodeColorArray[eje.nodoDestino] == _threadCreationIdx) {
-        cout << "He fallado " + to_string(_threadCreationIdx) << endl;
+        msgLog(" he fallado ");
         while(1){}
       }
       pthread_mutex_lock(&shared->_nodesMutexes.at(eje.nodoDestino));
       procesado = procesarNodo(eje, shared, threadObjects);
       pthread_mutex_unlock(&shared->_nodesMutexes.at(eje.nodoDestino));
       //msgLog("unlock processThread");
-      eje = procesado ? getNextEdge(shared) : eje;
-      procesado = false;
 
       if(_request_queue.size() > 0){
-        //msgLog(" resuelvo merge");
+
         msgLog(" atiendo porque tengo " + to_string(_request_queue.size()) + " pedidos");
         merge(_request_queue.front(), shared, threadObjects);
+        eje = getNextEdge(shared);
         msgLog(" volví");
       }
+
+      eje = procesado ? getNextEdge(shared) : eje;
+      msgLog(" mi top es " + to_string((long)_mstEjes.top().nodoOrigen) + "----" + to_string((long)_mstEjes.top().nodoDestino));
+      procesado = true;
       //getMst()->imprimirGrafo();
     }
     if(getMst()->numVertices == shared->_g->numVertices){ // thread contiene todos los nodos del grafo ==> thread ganador
@@ -365,8 +368,6 @@ void Thread::fagocitar(Thread* other, Eje eje, sharedData* shared, unordered_map
       }
     }
 
-
-
     for (int i = 0; i < shared->_nodeColorArray.size(); ++i){
       if(shared->_nodeColorArray[i] == _threadCreationIdx){
         auto listaDeEjes = shared->_g->listaDeAdyacencias[i];
@@ -381,6 +382,9 @@ void Thread::fagocitar(Thread* other, Eje eje, sharedData* shared, unordered_map
     other->_mst = Grafo();
 
     other->reiniciarThread(shared, threadObjects);
+
+    msgLog( to_string((long)other->_threadCreationIdx) + " y en top the other queda el eje " + to_string(other->_mstEjes.top().nodoOrigen) + "----" + to_string(other->_mstEjes.top().nodoDestino));
+    msgLog(to_string((long)_threadCreationIdx) + " y en mi top queda el eje " + to_string(_mstEjes.top().nodoOrigen) + "----" + to_string(_mstEjes.top().nodoDestino));
 
     cout << "Mi grafo al final " << endl;
     _mst.imprimirGrafo();
