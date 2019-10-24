@@ -205,7 +205,7 @@ void Thread::processThread(sharedData* shared, unordered_map<pthread_t, Thread>*
 
       if(_request_queue.size() > 0){
         //msgLog(" resuelvo merge");
-        msgLog(" atiendo");
+        msgLog(" atiendo porque tengo " + to_string(_request_queue.size()) + " pedidos");
         merge(_request_queue.front(), shared, threadObjects);
         msgLog(" volví");
       }
@@ -305,8 +305,7 @@ void Thread::requestMerge(sharedData* shared, unordered_map<pthread_t, Thread>* 
         // Un nodo hijo no puede estar en la cola de fusiones de otro nodo.
         // Solo se pueden agregar a la cola si el padre no está siendo fusionado por otro thread."""
     //cout << "Espero por " << other->_threadCreationIdx << " y soy " << _threadCreationIdx << endl;
-    other->_request_queue.push(make_pair((  &((*threadObjects)[_threadCreationIdx
-      ])  ), eje) );
+    other->_request_queue.push(make_pair((&((*threadObjects)[_threadCreationIdx])), eje) );
     pthread_mutex_unlock(&shared->_threadsMutexes.at(other->_threadCreationIdx));
     //msgLog("unlock1 procesarNodo");
 
@@ -342,10 +341,15 @@ void Thread::fagocitar(Thread* other, Eje eje, sharedData* shared, unordered_map
 
     // ejes a explorar
     // priority_queue<int, vector<Eje>, Compare > _mstEjes;
-    while(other->_mstEjes.size() > 0){
+    /*while(other->_mstEjes.size() > 0){
         _mstEjes.push(other->_mstEjes.top());
         other->_mstEjes.pop();
-    }
+    }*/
+
+    priority_queue<int, vector<Eje>, Compare > newMstEjes;
+
+    _mstEjes = newMstEjes;
+    other->_mstEjes = newMstEjes;
 
     // requests
     // queue<pair<Thread*, pair<int,int> > > _request_queue;
@@ -360,6 +364,19 @@ void Thread::fagocitar(Thread* other, Eje eje, sharedData* shared, unordered_map
       }
     }
 
+
+
+    for (int i = 0; i < shared->_nodeColorArray.size(); ++i){
+      if(shared->_nodeColorArray[i] == _threadCreationIdx){
+        auto listaDeEjes = shared->_g->listaDeAdyacencias[i];
+        for(auto x : listaDeEjes){
+          if(shared->_nodeColorArray[x.nodoDestino] != _threadCreationIdx){
+            _mstEjes.push(x);
+          }
+        }
+      }
+    }
+
     other->_mst = Grafo();
 
     other->reiniciarThread(shared, threadObjects);
@@ -369,7 +386,6 @@ void Thread::fagocitar(Thread* other, Eje eje, sharedData* shared, unordered_map
     cout << "El grafo de other al final " << endl;
     other->_mst.imprimirGrafo();
 
-    other->_merged=true;
 }
 
 // Realizar la fusión
@@ -382,8 +398,9 @@ void Thread::merge(pair<Thread*, Eje> req, sharedData* shared, unordered_map<pth
 
     } else {
         // el other me ingiere cual globulo blanco a bacteria oprimida
-        req.first->fagocitar(this, req.second, shared, threadObjects);
+      req.first->fagocitar(&((*threadObjects)[_threadCreationIdx]), req.second, shared, threadObjects);
     }
+    req.first->_merged = true;
 }
 
 // Para buscar un nodo libre en el grafo.
