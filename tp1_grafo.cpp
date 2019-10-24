@@ -41,7 +41,7 @@ class Thread{
     Thread& operator=(Thread other);
     int buscarNodo();
     void pintarNodo(Eje eje, sharedData* shared);
-    void pintarVecinos(Grafo* g, int num);
+    void pintarVecinos(sharedData* shared, int num);
     void reiniciarThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects);
     void initThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects);
     void processThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects);
@@ -126,16 +126,16 @@ void Thread::pintarNodo(Eje eje, sharedData* shared){
 }
 
 // Se pintan los vecinos de gris para marcar que son alcanzables desde el árbol (salvo los que ya son del árbol)
-void Thread::pintarVecinos(Grafo *g, int nodo){
+void Thread::pintarVecinos(sharedData* shared, int nodo){
    //Agrego todas las aristas que salen del nodo insertado y no apuntan a algún otro nodo de los que ya están en el mst
    //cout << "Paso 16: Listo" << endl;
    ////cout << "Estoy en pintarVecinos y el tamaño del mapa es: " << g->listaDeAdyacencias[0].size() << endl;
 
-   for (int i = 0; i < g->listaDeAdyacencias[nodo].size(); i++) {
+   for (int i = 0; i < shared->_g->listaDeAdyacencias[nodo].size(); i++) {
     //cout << "Paso 17: Listo" << endl;
-
-    if(_mst.noEsta(g->listaDeAdyacencias[nodo].at(i).nodoDestino)){
-      _mstEjes.push(g->listaDeAdyacencias[nodo].at(i));
+    //shared->_nodeColorArray.at(eje.nodoDestino) == _threadCreationIdx
+    if(shared->_nodeColorArray.at(shared->_g->listaDeAdyacencias[nodo].at(i).nodoDestino)!=_threadCreationIdx){
+      _mstEjes.push(shared->_g->listaDeAdyacencias[nodo].at(i));
     }
   }
 }
@@ -222,7 +222,7 @@ bool Thread::procesarNodo(Eje eje, sharedData* shared, unordered_map<pthread_t, 
       //cout << "Paso 14: Listo" << endl;
       pintarNodo(eje,shared);
       //cout << "Paso 15: Listo" << endl;
-      pintarVecinos(shared->_g, eje.nodoDestino);
+      pintarVecinos(shared, eje.nodoDestino);
       return true;
 
     } else {
