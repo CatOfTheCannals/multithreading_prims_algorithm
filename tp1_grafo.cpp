@@ -233,6 +233,7 @@ bool Thread::procesarNodo(Eje eje, sharedData* shared, unordered_map<pthread_t, 
       pintarNodo(eje,shared);
       //cout << "Paso 15: Listo" << endl;
       pintarVecinos(shared, eje.nodoDestino);
+      
       return true;
 
     } else {
@@ -264,11 +265,11 @@ bool Thread::procesarNodo(Eje eje, sharedData* shared, unordered_map<pthread_t, 
         }
         pthread_mutex_unlock(&shared->_threadsMutexes.at(_threadCreationIdx));
         //msgLog("unlock2 procesarNodo");
+        _merged = false;
+        return true;
       }
-      _merged = false;
-      return true;
+      return false;
     }
-    return false;
 }
 
 pthread_t Thread::getIdx(){
