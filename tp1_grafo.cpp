@@ -45,7 +45,7 @@ class Thread{
     void reiniciarThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects);
     void initThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects);
     void processThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects);
-    void fagocitar(Thread* other, Grafo *g);
+    void fagocitar(Thread* other, sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects);
     void assignIdx(pthread_t threadCreationIdx);
     void msgLog(string msg);
     pthread_t getIdx();
@@ -54,7 +54,7 @@ class Thread{
     bool procesarNodo(Eje eje, sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects);
     Thread tomarNodo(int nodo);
     void requestMerge(sharedData* shared, Thread* other, int source_node, int dest_node);
-    void merge(Thread* other, Grafo* g);
+    void merge(Thread* other, sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects);
     friend void swap(Thread& lhs, Thread& rhs);
 
 
@@ -167,7 +167,7 @@ void Thread::initThread(sharedData* shared, unordered_map<pthread_t, Thread>* th
         //cout << "Paso 10: Listo" << endl;
 
         // Veo que nadie lo haya pintado
-        if(shared->_nodeColorArray[node] == -1) {
+        if(((long)shared->_nodeColorArray[node]) == -1) {
             nodeFound = true;
             //cout << "Paso 11: Listo" << endl;
             Eje eje(-1, node, -1);
@@ -190,6 +190,7 @@ void Thread::processThread(sharedData* shared, unordered_map<pthread_t, Thread>*
       Eje eje = !procesado ? getNextEdge(shared) : eje;
       // cout << "consegui eje: " << eje.nodoOrigen << "----" << eje.nodoDestino << endl;
       msgLog("lock processThread nodo color " + to_string(shared->_nodeColorArray[eje.nodoDestino]));
+      if(shared->_nodeColorArray[eje.nodoDestino] == _threadCreationIdx) cout << "He fallado " + to_string(_threadCreationIdx) << endl;
       pthread_mutex_lock(&shared->_nodesMutexes.at(eje.nodoDestino));
       procesado = procesarNodo(eje, shared, threadObjects);
       pthread_mutex_unlock(&shared->_nodesMutexes.at(eje.nodoDestino));
@@ -197,7 +198,7 @@ void Thread::processThread(sharedData* shared, unordered_map<pthread_t, Thread>*
 
       if(_request_queue.size() > 0){
         msgLog(" resuelvo merge");
-        merge(_request_queue.front().first, shared->_g);
+        merge(_request_queue.front().first, shared, threadObjects);
       }
     }
 
@@ -218,7 +219,7 @@ bool Thread::procesarNodo(Eje eje, sharedData* shared, unordered_map<pthread_t, 
 
     pthread_t node_color = shared->_nodeColorArray[eje.nodoDestino];
     //cout << "Paso 13: Listo" << endl;
-    if(node_color == -1){
+    if(((long)node_color) == -1){
       //cout << "Paso 14: Listo" << endl;
       pintarNodo(eje,shared);
       //cout << "Paso 15: Listo" << endl;
@@ -296,7 +297,7 @@ void Thread::requestMerge(sharedData* shared, Thread* other, int source_node, in
 
 }
 
-void Thread::fagocitar(Thread* other, Grafo *g){
+void Thread::fagocitar(Thread* other, sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){
     cout << "soy el thread " << _threadCreationIdx << " FAGOCITO" << endl;
     // nodos
     for (auto const& x : other->_mst.listaDeAdyacencias){
@@ -329,20 +330,28 @@ void Thread::fagocitar(Thread* other, Grafo *g){
         other->_request_queue.pop();
     }
 
+    for (int i = 0; i < shared->_nodeColorArray.size(); ++i){
+      if(shared->_nodeColorArray[i] == other->_threadCreationIdx){
+        shared->_nodeColorArray[i] = _threadCreationIdx;
+      }
+    }
+
+    other->reiniciarThread(shared, threadObjects);
+
     other->_merged=true;
 }
 
 // Realizar la fusión
-void Thread::merge(Thread* other, Grafo *g){
+void Thread::merge(Thread* other, sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){
     msgLog(" mergeo");
     other->_merged=false; // Habría que setearlo en true al final para avisarle al otro thread que terminó el merge
     if(_threadCreationIdx > other->_threadCreationIdx){ 
       // yo ingiero al other
-      fagocitar(other, g);
+      fagocitar(other, shared, threadObjects);
 
     } else {
         // el other me ingiere cual globulo blanco a bacteria oprimida
-        other->fagocitar(this, g);
+        other->fagocitar(this, shared, threadObjects);
     }
 }
 
@@ -369,8 +378,6 @@ void* mstParaleloThread(void *p){
     //cout << "Paso 3: Listo" << endl;
 
     pthread_mutex_lock(&(shared->_mapMutex));
-
-
 
     (*threadObjects)[tid] = Thread();
 
