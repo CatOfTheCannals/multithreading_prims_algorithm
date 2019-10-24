@@ -186,22 +186,25 @@ void Thread::msgLog(string msg){
 // Iniciar un thread.
 void Thread::processThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){
     bool procesado = false;
+    Eje eje = getNextEdge(shared);
     while(_mst.numVertices < shared->_g->numVertices){
-      Eje eje = !procesado ? getNextEdge(shared) : eje;
-      // cout << "consegui eje: " << eje.nodoOrigen << "----" << eje.nodoDestino << endl;
+
+      cout << "consegui eje: " << eje.nodoOrigen << "----" << eje.nodoDestino << endl;
       msgLog("lock processThread nodo color " + to_string(shared->_nodeColorArray[eje.nodoDestino]));
       if(shared->_nodeColorArray[eje.nodoDestino] == _threadCreationIdx) cout << "He fallado " + to_string(_threadCreationIdx) << endl;
       pthread_mutex_lock(&shared->_nodesMutexes.at(eje.nodoDestino));
       procesado = procesarNodo(eje, shared, threadObjects);
       pthread_mutex_unlock(&shared->_nodesMutexes.at(eje.nodoDestino));
       msgLog("unlock processThread");
+      eje = procesado ? getNextEdge(shared) : eje;
+      procesado = false;
 
       if(_request_queue.size() > 0){
         msgLog(" resuelvo merge");
         merge(_request_queue.front().first, shared, threadObjects);
       }
-    }
 
+    }
     if(getMst()->numVertices == shared->_g->numVertices){ // thread contiene todos los nodos del grafo ==> thread ganador
         // TODO(charli): ver cual es el formato de output que se espera
         cout << endl;
@@ -271,10 +274,13 @@ Grafo* Thread::getMst(){
 Eje Thread::getNextEdge(sharedData* shared){
     Eje eje = _mstEjes.top();
     _mstEjes.pop();
-    while(shared->_nodeColorArray.at(eje.nodoDestino) == _threadCreationIdx){
-      eje = _mstEjes.top();
-      _mstEjes.pop();
+    if(_mst.numVertices != shared->_g->numVertices){
+      while(shared->_nodeColorArray.at(eje.nodoDestino) == _threadCreationIdx){
+        eje = _mstEjes.top();
+        _mstEjes.pop();
+      }
     }
+    msgLog("¿son iguales? => " + to_string(shared->_nodeColorArray.at(eje.nodoDestino) == _threadCreationIdx ));
   return eje;
 }
 
