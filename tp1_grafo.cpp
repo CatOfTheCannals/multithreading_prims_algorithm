@@ -204,7 +204,9 @@ void Thread::processThread(sharedData* shared, unordered_map<pthread_t, Thread>*
       if(_request_queue.size() > 0){
 
         msgLog(" atiendo porque tengo " + to_string(_request_queue.size()) + " pedidos");
-        merge(_request_queue.front(), shared, threadObjects);
+        auto pair = _request_queue.front();
+        _request_queue.pop();
+        merge(pair, shared, threadObjects);
         eje = getNextEdge(shared);
         msgLog(" volví");
       }
@@ -353,9 +355,10 @@ void Thread::fagocitar(Thread* other, Eje eje, sharedData* shared, unordered_map
     }*/
 
     priority_queue<int, vector<Eje>, Compare > newMstEjes;
+    priority_queue<int, vector<Eje>, Compare > newOtherMstEjes;
 
     _mstEjes = newMstEjes;
-    other->_mstEjes = newMstEjes;
+    other->_mstEjes = newOtherMstEjes;
 
     // requests
     // queue<pair<Thread*, pair<int,int> > > _request_queue;
@@ -377,9 +380,12 @@ void Thread::fagocitar(Thread* other, Eje eje, sharedData* shared, unordered_map
 
     // obtengo nuevos ejes a explorar
     for (int i = 0; i < shared->_nodeColorArray.size(); ++i){
+
       if(shared->_nodeColorArray[i] == _threadCreationIdx){
         auto listaDeEjes = shared->_g->listaDeAdyacencias[i];
         for(auto x : listaDeEjes){
+                  cout << "a" << endl;
+
           if(shared->_nodeColorArray[x.nodoDestino] != _threadCreationIdx){
             _mstEjes.push(x);
           }
