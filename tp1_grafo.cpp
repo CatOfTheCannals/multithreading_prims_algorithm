@@ -215,6 +215,7 @@ void Thread::processThread(sharedData* shared, unordered_map<pthread_t, Thread>*
         }
         eje = getNextEdge(shared);
         msgLog(" volví");
+        procesado = false;
       }
 
       eje = procesado ? getNextEdge(shared) : eje;
@@ -394,6 +395,7 @@ void Thread::fagocitar(Thread* other, Eje eje, sharedData* shared, unordered_map
         auto listaDeEjes = shared->_g->listaDeAdyacencias[i];
         for(auto x : listaDeEjes){
           if(shared->_nodeColorArray[x.nodoDestino] != _threadCreationIdx){
+            msgLog(" pusheo " + to_string(x.nodoOrigen) + "----" + to_string(x.nodoDestino));
             _mstEjes.push(x);
           }
         }
