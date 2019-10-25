@@ -29,6 +29,9 @@ typedef struct Eje {
   bool operator>(Eje other){
     return peso > other.peso;
   }
+  bool operator==(Eje other){
+    return (nodoOrigen == other.nodoOrigen && nodoDestino == other.nodoDestino && peso == other.peso);
+  }
 } Eje;
 
 class Grafo {

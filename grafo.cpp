@@ -1,6 +1,7 @@
 #include "grafo.h"
 #include <fstream>
 #include <stack>
+#include <algorithm> 
 
 
 int Grafo::inicializar(string nombreArchivo) {
@@ -48,6 +49,18 @@ vector<Eje>::iterator Grafo::vecinosEnd(int num){
 
 void Grafo::insertarEje(Eje e){
   listaDeAdyacencias[e.nodoOrigen].push_back(e);
+  bool agregado = false;
+  Eje invertido = Eje(e.nodoDestino, e.nodoOrigen, e.peso);
+  for (auto it : listaDeAdyacencias[e.nodoDestino]){
+    if(it == invertido){
+      agregado = true;
+      break;
+    }
+  }
+  if(!agregado){
+    cout << "Incremento por el eje " << e.nodoOrigen << "----" << e.nodoDestino << endl;
+    incrementarTotalEjes();
+  }
 }
 
 void Grafo::insertarEje(int nodoA, int nodoB, int peso){
