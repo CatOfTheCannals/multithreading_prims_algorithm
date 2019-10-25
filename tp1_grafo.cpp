@@ -213,13 +213,16 @@ void Thread::processThread(sharedData* shared, unordered_map<pthread_t, Thread>*
         if(_die){
           pthread_exit(0);
         }
+        //_merged = false;
+        msgLog(" merged vale " + to_string(_merged));
         eje = getNextEdge(shared);
         msgLog(" volví");
         procesado = false;
       }
+      msgLog(" procesado vale " + to_string(procesado));
 
       eje = procesado ? getNextEdge(shared) : eje;
-      msgLog(" mi top es " + to_string((long)_mstEjes.top().nodoOrigen) + "----" + to_string((long)_mstEjes.top().nodoDestino));
+      //msgLog(" mi top es " + to_string((long)_mstEjes.top().nodoOrigen) + "----" + to_string((long)_mstEjes.top().nodoDestino));
       procesado = true;
       //getMst()->imprimirGrafo();
     }
@@ -237,7 +240,7 @@ void Thread::assignIdx(pthread_t threadCreationIdx){
 
 bool Thread::procesarNodo(Eje eje, sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){
       //cout << "Estoy en procesarNodo y el tamaño del mapa es: " << shared->_g->listaDeAdyacencias.size() << endl;
-
+    bool res = true;
     pthread_t node_color = shared->_nodeColorArray[eje.nodoDestino];
     //cout << "Paso 13: Listo" << endl;
     if(((long)node_color) == -1){
@@ -246,17 +249,17 @@ bool Thread::procesarNodo(Eje eje, sharedData* shared, unordered_map<pthread_t, 
       //cout << "Paso 15: Listo" << endl;
       pintarVecinos(shared, eje.nodoDestino);
       
-      return true;
+      return res;
 
     } else {
       // Hay que mergear 
       // Pido mi mutex para evitar que lleguen request mientras se resuelve mi merge
-
-      //msgLog("trylock1 procesarNodo");
+      bool merge_solved = false;
+      msgLog("trylock1 procesarNodo");
       if(pthread_mutex_trylock(&shared->_threadsMutexes.at(_threadCreationIdx)) == 0){
-        //msgLog("lock1 procesarNodo");
+        msgLog("lock1 procesarNodo");
 
-        //cout << "Lock 1: " << _threadCreationIdx << endl;
+        cout << "Lock 1: " << _threadCreationIdx << endl;
         if(pthread_mutex_trylock(&shared->_threadsMutexes.at(node_color)) == 0){
           //msgLog("lock2 procesarNodo");
           //cout << "Lock 2: " << node_color << endl;
@@ -276,14 +279,14 @@ bool Thread::procesarNodo(Eje eje, sharedData* shared, unordered_map<pthread_t, 
             if(_die){
               pthread_exit(0);
             }
+            merge_solved = true;
           }
         }
         pthread_mutex_unlock(&shared->_threadsMutexes.at(_threadCreationIdx));
-        //msgLog("unlock2 procesarNodo");
+        msgLog("unlock2 procesarNodo");
         _merged = false;
-        return true;
       }
-      return false;
+      return res && merge_solved;
     }
 }
 
@@ -323,7 +326,7 @@ void Thread::requestMerge(sharedData* shared, unordered_map<pthread_t, Thread>* 
     //cout << "Espero por " << other->_threadCreationIdx << " y soy " << _threadCreationIdx << endl;
     other->_request_queue.push(make_pair((&((*threadObjects)[_threadCreationIdx])), eje) );
     pthread_mutex_unlock(&shared->_threadsMutexes.at(other->_threadCreationIdx));
-    //msgLog("unlock1 procesarNodo");
+    msgLog("unlock1 procesarNodo");
 
 }
 
