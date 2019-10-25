@@ -142,6 +142,7 @@ void Thread::pintarVecinos(sharedData* shared, int nodo){
 
 //Reinicia las estructuras de un thread.
 void Thread::reiniciarThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){
+    msgLog("nodos libres al reiniciar" + to_string(shared->_freeNodes.size() == 0)) ;
     initThread(shared, threadObjects);
 }
 
@@ -155,7 +156,6 @@ void Thread::initThread(sharedData* shared, unordered_map<pthread_t, Thread>* th
 
     //cout << "Paso 8: Listo" << endl;
 
-    nodeFound=false;
     while(!nodeFound){
         if(shared->_freeNodes.size() == 0) {
             pthread_exit(0);
@@ -337,6 +337,8 @@ void Thread::fagocitar(Thread* other, Eje eje, sharedData* shared, unordered_map
         }
     }
 
+    msgLog("pisando colas");
+
     _mst.insertarEje(eje.nodoOrigen, eje.nodoDestino, eje.peso);
 
     // pisar lista de adyacencias de other
@@ -360,14 +362,20 @@ void Thread::fagocitar(Thread* other, Eje eje, sharedData* shared, unordered_map
     while(other->_request_queue.size() > 0){
         _request_queue.push(other->_request_queue.front());
         other->_request_queue.pop();
+        msgLog("requests pendientes: " + to_string(other->_request_queue.size()));
     }
+    msgLog("requests transferi2");
 
+    // le pinto los nodos de mi color
     for (int i = 0; i < shared->_nodeColorArray.size(); ++i){
       if(shared->_nodeColorArray[i] == other->_threadCreationIdx){
         shared->_nodeColorArray[i] = _threadCreationIdx;
       }
     }
 
+    msgLog("nodos secuestra2");
+
+    // obtengo nuevos ejes a explorar
     for (int i = 0; i < shared->_nodeColorArray.size(); ++i){
       if(shared->_nodeColorArray[i] == _threadCreationIdx){
         auto listaDeEjes = shared->_g->listaDeAdyacencias[i];
@@ -378,6 +386,8 @@ void Thread::fagocitar(Thread* other, Eje eje, sharedData* shared, unordered_map
         }
       }
     }
+
+    msgLog("ejes explora2");
 
     other->_mst = Grafo();
 
@@ -410,7 +420,7 @@ void Thread::merge(pair<Thread*, Eje> req, sharedData* shared, unordered_map<pth
 
 // Para buscar un nodo libre en el grafo.
 int buscarNodoLibre(){
-   // TODO.
+   // TODO
 }
 
 
