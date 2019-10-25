@@ -13,6 +13,7 @@
 #include <unordered_map>
 #include <list>
 #include <queue>          // std::priority_queue
+#include <fstream>
 
 
 #include <typeinfo>
@@ -56,6 +57,7 @@ class Thread{
     Thread tomarNodo(int nodo);
     void requestMerge(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects, Thread* other, Eje eje);
     void merge(pair<Thread*, Eje> req, sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects);
+    void time_to_die();
     friend void swap(Thread& lhs, Thread& rhs);
 
 
@@ -148,6 +150,23 @@ void Thread::reiniciarThread(sharedData* shared, unordered_map<pthread_t, Thread
     initThread(shared, threadObjects);
 }
 
+void Thread::time_to_die(){
+  string filename = to_string((unsigned long)_threadCreationIdx) + ".out";
+  string new_filename = filename.substr(filename.length() - 6, 6);
+
+  char filename_char[filename.length() + 1];
+  char new_filename_char[new_filename.length() + 1];
+
+  copy(filename.begin(), filename.end(), filename_char);
+  copy(new_filename.begin(), new_filename.end(), new_filename_char);
+
+  filename_char[filename.length()] = '\0';
+  new_filename_char[new_filename.length()] = '\0';
+
+  rename(filename_char, new_filename_char);
+  pthread_exit(0);
+}
+
 
 // Iniciar un thread.
 void Thread::initThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){
@@ -184,7 +203,11 @@ void Thread::initThread(sharedData* shared, unordered_map<pthread_t, Thread>* th
 }
 
 void Thread::msgLog(string msg){
-    cout << "tid: " + to_string((unsigned long)_threadCreationIdx) + " " + msg << endl;
+  string filename = to_string((unsigned long)_threadCreationIdx) + ".out";
+  fstream outfile;
+  outfile.open(filename, fstream::in | fstream::out | fstream::app);
+  outfile << "tid: " + to_string((unsigned long)_threadCreationIdx) + " " + msg << endl;
+  outfile.close();
 }
 
 // Iniciar un thread.
@@ -213,7 +236,7 @@ void Thread::processThread(sharedData* shared, unordered_map<pthread_t, Thread>*
           _request_queue.pop();
           merge(pair, shared, threadObjects);
           if(_die){
-            pthread_exit(0);
+            time_to_die();
           }
           //_merged = false;
           msgLog(" merged vale " + to_string(_merged));
@@ -238,8 +261,7 @@ void Thread::processThread(sharedData* shared, unordered_map<pthread_t, Thread>*
       cout << "Printeando el grafo obtenido por el thread ganador" << endl;
       getMst()->imprimirGrafo();
     }
-
-    pthread_exit(0);
+    time_to_die();
 }
 
 void Thread::assignIdx(pthread_t threadCreationIdx){
@@ -285,7 +307,7 @@ bool Thread::procesarNodo(Eje eje, sharedData* shared, unordered_map<pthread_t, 
             }
             msgLog(" me atendieron y _merged es " + to_string(_merged));
             if(_die){
-              pthread_exit(0);
+              time_to_die();
             }
             merge_solved = true;
           }
@@ -449,7 +471,6 @@ int buscarNodoLibre(){
    // TODO
 }
 
-
 // Gestión principal del thread. Contiene el ciclo que le permite a cada thread hacer sus funciones.
 void* mstParaleloThread(void *p){
 
@@ -460,7 +481,13 @@ void* mstParaleloThread(void *p){
     // Se obtiene el numero de thread y se inicializan sus
     //cout << "Paso 2: Listo" << endl;
 
+
+
     pthread_t tid = pthread_self();
+
+    cout << "Soy " + to_string((long) tid) + " y voy a crear mi mutex" << endl;
+
+
     pthread_mutex_t mu;
     shared->_threadsMutexes.insert({tid,mu});
     pthread_mutex_init(&shared->_threadsMutexes.at(tid), NULL);
@@ -468,8 +495,11 @@ void* mstParaleloThread(void *p){
 
     pthread_mutex_lock(&(shared->_mapMutex));
 
+    cout << "Soy " + to_string((long) tid) + " y voy a crear mi objeto thread" << endl;
+
     (*threadObjects)[tid] = Thread();
 
+    cout << "Creación de thread exitosa para " + to_string((long)tid) << endl;
     //cout << "Paso 4: Listo" << endl;
 
     (*threadObjects).at(tid).assignIdx(tid);
@@ -490,8 +520,7 @@ void* mstParaleloThread(void *p){
 
     pthread_mutex_unlock(&(shared->_initMutex));  
 
-    cout << "defined initThread succesfully" << endl;
-    cout << endl;
+    cout << "Init exitoso para " + to_string((long)tid) << endl;
 
     (*threadObjects)[tid].processThread(shared, threadObjects);
 /*  
@@ -544,6 +573,7 @@ void* mstParaleloThread(void *p){
 
 
 void mstParalelo(Grafo *g, int cantThreads){
+    system("./borrar_logs.sh");
 
     //Verificar cantidad de threads para ejecutar el algoritmo
     //cout << "Estoy en mstParalelo y el tamaño del mapa es: " << g->listaDeAdyacencias.size() << endl;
