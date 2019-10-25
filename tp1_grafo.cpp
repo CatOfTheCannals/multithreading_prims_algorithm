@@ -63,6 +63,7 @@ class Thread{
     pthread_t _threadCreationIdx;
     queue<pair<Thread*, Eje > > _request_queue; //TODO(charli): agregar eje como segundo elem
     bool _merged;
+    bool _reiniciar;
 };
 
 
@@ -150,6 +151,8 @@ void Thread::reiniciarThread(sharedData* shared, unordered_map<pthread_t, Thread
 // Iniciar un thread.
 void Thread::initThread(sharedData* shared, unordered_map<pthread_t, Thread>* threadObjects){
 
+    _reiniciar = false;
+
     int node;
     bool nodeFound = false;
     // si no quedan nodos libres, se acabo la joda
@@ -158,13 +161,16 @@ void Thread::initThread(sharedData* shared, unordered_map<pthread_t, Thread>* th
 
     while(!nodeFound){
         if(shared->_freeNodes.size() == 0) {
+            msgLog("me autoboleteo");
             pthread_exit(0);
         }
         node = shared->_freeNodes.back();
         //cout << "Paso 9: Listo" << endl;
         // pido el mutex de ese Nodo
         //msgLog("lock init");
+        msgLog("intento init lock");
         pthread_mutex_lock(&shared->_nodesMutexes[node]);
+        msgLog("init lock obteni2");
         //cout << "Paso 10: Listo" << endl;
 
         // Veo que nadie lo haya pintado
@@ -264,6 +270,9 @@ bool Thread::procesarNodo(Eje eje, sharedData* shared, unordered_map<pthread_t, 
 
             msgLog(" pido merge");
             while(!_merged){
+            }
+            if(_reiniciar) {
+              reiniciarThread(shared, threadObjects);
             }
             msgLog(" me atendieron y _merged es " + to_string(_merged));
           }
@@ -384,8 +393,6 @@ void Thread::fagocitar(Thread* other, Eje eje, sharedData* shared, unordered_map
       if(shared->_nodeColorArray[i] == _threadCreationIdx){
         auto listaDeEjes = shared->_g->listaDeAdyacencias[i];
         for(auto x : listaDeEjes){
-                  cout << "a" << endl;
-
           if(shared->_nodeColorArray[x.nodoDestino] != _threadCreationIdx){
             _mstEjes.push(x);
           }
@@ -397,7 +404,7 @@ void Thread::fagocitar(Thread* other, Eje eje, sharedData* shared, unordered_map
 
     other->_mst = Grafo();
 
-    other->reiniciarThread(shared, threadObjects);
+    other->_reiniciar = true;
 
     msgLog( to_string((long)other->_threadCreationIdx) + " y en top the other queda el eje " + to_string(other->_mstEjes.top().nodoOrigen) + "----" + to_string(other->_mstEjes.top().nodoDestino));
     msgLog(to_string((long)_threadCreationIdx) + " y en mi top queda el eje " + to_string(_mstEjes.top().nodoOrigen) + "----" + to_string(_mstEjes.top().nodoDestino));
