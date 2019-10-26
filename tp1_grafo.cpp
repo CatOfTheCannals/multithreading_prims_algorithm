@@ -158,20 +158,22 @@ void Thread::reiniciarThread(sharedData *shared, unordered_map<pthread_t, Thread
 
 void Thread::time_to_die()
 {
-  string filename = to_string((unsigned long)_threadCreationIdx) + ".out";
-  string new_filename = filename.substr(filename.length() - 6, 6);
+  if(_verbose) {
+    string filename = to_string((unsigned long)_threadCreationIdx) + ".out";
+    string new_filename = filename.substr(filename.length() - 6, 6);
 
-  char filename_char[filename.length() + 1];
-  char new_filename_char[new_filename.length() + 1];
+    char filename_char[filename.length() + 1];
+    char new_filename_char[new_filename.length() + 1];
 
-  copy(filename.begin(), filename.end(), filename_char);
-  copy(new_filename.begin(), new_filename.end(), new_filename_char);
+    copy(filename.begin(), filename.end(), filename_char);
+    copy(new_filename.begin(), new_filename.end(), new_filename_char);
 
-  filename_char[filename.length()] = '\0';
-  new_filename_char[new_filename.length()] = '\0';
+    filename_char[filename.length()] = '\0';
+    new_filename_char[new_filename.length()] = '\0';
 
-  rename(filename_char, new_filename_char);
-  pthread_exit(0);
+    rename(filename_char, new_filename_char);
+    pthread_exit(0);
+  }
 }
 
 // Iniciar un thread.
