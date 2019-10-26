@@ -489,7 +489,9 @@ void* mstParaleloThread(void *p){
 
 
     pthread_mutex_t mu;
+        pthread_mutex_lock(&(shared->_mapMutex));
     shared->_threadsMutexes.insert({tid,mu});
+        pthread_mutex_unlock(&(shared->_mapMutex));
     pthread_mutex_init(&shared->_threadsMutexes.at(tid), NULL);
     //cout << "Paso 3: Listo" << endl;
 
@@ -519,8 +521,6 @@ void* mstParaleloThread(void *p){
     //((*threadObjects)[tid].getMst())->imprimirGrafo();
 
     pthread_mutex_unlock(&(shared->_initMutex));  
-
-    cout << "Init exitoso para " + to_string((long)tid) << endl;
 
     (*threadObjects)[tid].processThread(shared, threadObjects);
 /*  
