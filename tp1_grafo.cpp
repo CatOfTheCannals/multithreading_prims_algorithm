@@ -43,7 +43,7 @@ public:
   {
     _merged = false;
     _die = false;
-    _verbose = false;
+    _verbose = true;
   };
   Thread &operator=(Thread other);
   int buscarNodo();
@@ -71,7 +71,7 @@ public:
   queue<pair<Thread *, Eje>> _request_queue; //TODO(charli): agregar eje como segundo elem
   bool _merged;
   bool _die;
-  bool _verbose = false;
+  bool _verbose = true;
 };
 
 // Imprimir el grafo resultado durante los experimentos
