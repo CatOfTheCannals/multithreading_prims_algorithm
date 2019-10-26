@@ -43,7 +43,7 @@ public:
   {
     _merged = false;
     _die = false;
-    _verbose = true;
+    _verbose = false;
   };
   Thread &operator=(Thread other);
   int buscarNodo();
@@ -71,10 +71,11 @@ public:
   queue<pair<Thread *, Eje>> _request_queue; //TODO(charli): agregar eje como segundo elem
   bool _merged;
   bool _die;
+  bool _verbose = false;
 };
 
 // Imprimir el grafo resultado durante los experimentos
-bool imprimirResultado = true;
+bool imprimirResultado = false;
 
 // Se sugieren usar variables (unas atómicas y otras no) para:
 
