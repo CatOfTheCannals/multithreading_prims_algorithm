@@ -4,3 +4,4 @@ watch.sh
 *.o
 TP1
 *.out
+*.log
