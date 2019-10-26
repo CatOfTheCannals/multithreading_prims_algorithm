@@ -43,6 +43,7 @@ public:
   {
     _merged = false;
     _die = false;
+    _verbose = true;
   };
   Thread &operator=(Thread other);
   int buscarNodo();
@@ -211,11 +212,13 @@ void Thread::initThread(sharedData *shared, unordered_map<pthread_t, Thread> *th
 
 void Thread::msgLog(string msg)
 {
-  string filename = to_string((unsigned long)_threadCreationIdx) + ".out";
-  fstream outfile;
-  outfile.open(filename, fstream::in | fstream::out | fstream::app);
-  outfile << "tid: " + to_string((unsigned long)_threadCreationIdx) + " " + msg << endl;
-  outfile.close();
+  if(_verbose) {
+      string filename = to_string((unsigned long)_threadCreationIdx) + ".out";
+      fstream outfile;
+      outfile.open(filename, fstream::in | fstream::out | fstream::app);
+      outfile << "tid: " + to_string((unsigned long)_threadCreationIdx) + " " + msg << endl;
+      outfile.close();
+    }
 }
 
 // Iniciar un thread.
