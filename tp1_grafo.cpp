@@ -44,6 +44,7 @@ public:
     _merged = false;
     _die = false;
     _verbose = true;
+
   };
   Thread &operator=(Thread other);
   int buscarNodo();
@@ -75,7 +76,7 @@ public:
 };
 
 // Imprimir el grafo resultado durante los experimentos
-bool imprimirResultado = false;
+bool imprimirResultado = true;
 
 // Se sugieren usar variables (unas atómicas y otras no) para:
 
@@ -159,22 +160,20 @@ void Thread::reiniciarThread(sharedData *shared, unordered_map<pthread_t, Thread
 
 void Thread::time_to_die()
 {
-  if(_verbose) {
-    string filename = to_string((unsigned long)_threadCreationIdx) + ".out";
-    string new_filename = filename.substr(filename.length() - 6, 6);
+  string filename = to_string((unsigned long)_threadCreationIdx) + ".out";
+  string new_filename = filename.substr(filename.length() - 6, 6);
 
-    char filename_char[filename.length() + 1];
-    char new_filename_char[new_filename.length() + 1];
+  char filename_char[filename.length() + 1];
+  char new_filename_char[new_filename.length() + 1];
 
-    copy(filename.begin(), filename.end(), filename_char);
-    copy(new_filename.begin(), new_filename.end(), new_filename_char);
+  copy(filename.begin(), filename.end(), filename_char);
+  copy(new_filename.begin(), new_filename.end(), new_filename_char);
 
-    filename_char[filename.length()] = '\0';
-    new_filename_char[new_filename.length()] = '\0';
+  filename_char[filename.length()] = '\0';
+  new_filename_char[new_filename.length()] = '\0';
 
-    rename(filename_char, new_filename_char);
-    pthread_exit(0);
-  }
+  rename(filename_char, new_filename_char);
+  pthread_exit(0);
 }
 
 // Iniciar un thread.
@@ -215,13 +214,11 @@ void Thread::initThread(sharedData *shared, unordered_map<pthread_t, Thread> *th
 
 void Thread::msgLog(string msg)
 {
-  if(_verbose) {
-      string filename = to_string((unsigned long)_threadCreationIdx) + ".out";
-      fstream outfile;
-      outfile.open(filename, fstream::in | fstream::out | fstream::app);
-      outfile << "tid: " + to_string((unsigned long)_threadCreationIdx) + " " + msg << endl;
-      outfile.close();
-    }
+  string filename = to_string((unsigned long)_threadCreationIdx) + ".out";
+  fstream outfile;
+  outfile.open(filename, fstream::in | fstream::out | fstream::app);
+  outfile << "tid: " + to_string((unsigned long)_threadCreationIdx) + " " + msg << endl;
+  outfile.close();
 }
 
 // Iniciar un thread.
@@ -229,34 +226,29 @@ void Thread::processThread(sharedData *shared, unordered_map<pthread_t, Thread> 
 {
   msgLog("Entré a processThread");
   bool procesado = true;
-  if (_mstEjes.size() > 0)
-  {
+  if (_mstEjes.size() > 0){
     Eje eje = getNextEdge(shared);
-    while (_mst.numVertices < shared->_g->numVertices)
-    {
+    while (_mst.numVertices < shared->_g->numVertices){
 
       msgLog("conseguí eje: " + to_string(eje.nodoOrigen) + "----" + to_string(eje.nodoDestino) + " y el color del nodo destino es " + to_string((long)shared->_nodeColorArray[eje.nodoDestino]));
-      if (shared->_nodeColorArray[eje.nodoDestino] == _threadCreationIdx)
-      {
-        msgLog(" he fallado ");
-        while (1)
-        {
-        }
+
+      bool tome_mutex = false;
+      if(pthread_mutex_trylock(&shared->_nodesMutexes.at(eje.nodoDestino)) == 0){
+        tome_mutex = true;
+        procesado = procesarNodo(eje, shared, threadObjects);
+        pthread_mutex_unlock(&shared->_nodesMutexes.at(eje.nodoDestino));
       }
-      pthread_mutex_lock(&shared->_nodesMutexes.at(eje.nodoDestino));
-      procesado = procesarNodo(eje, shared, threadObjects);
-      pthread_mutex_unlock(&shared->_nodesMutexes.at(eje.nodoDestino));
+      procesado = procesado && tome_mutex;
       //msgLog("unlock processThread");
 
-      if (_request_queue.size() > 0)
-      {
+      if (_request_queue.size() > 0){
 
         msgLog(" atiendo porque tengo " + to_string(_request_queue.size()) + " pedidos");
         auto pair = _request_queue.front();
         _request_queue.pop();
         merge(pair, shared, threadObjects);
-        if (_die)
-        {
+        if (_die){
+          msgLog("Debo morir luego de llamar a merge");
           time_to_die();
         }
         //_merged = false;
@@ -329,16 +321,16 @@ bool Thread::procesarNodo(Eje eje, sharedData *shared, unordered_map<pthread_t, 
           msgLog(" pido merge");
           while (!_merged){}
           msgLog(" me atendieron y _merged es " + to_string(_merged));
-          if (_die)
-          {
-            time_to_die();
-          }
           merge_solved = true;
         }
       }
       pthread_mutex_unlock(&shared->_threadsMutexes.at(_threadCreationIdx));
       msgLog("unlock1 procesarNodo");
       _merged = false;
+    }
+    if (_die){
+      msgLog("Debo morir luego de encolarme");
+      time_to_die();
     }
     return res && merge_solved;
   }
@@ -354,12 +346,10 @@ Grafo *Thread::getMst()
   return &_mst;
 }
 
-Eje Thread::getNextEdge(sharedData *shared)
-{
+Eje Thread::getNextEdge(sharedData *shared){
   Eje eje = _mstEjes.top();
   _mstEjes.pop();
-  if (_mst.numVertices != shared->_g->numVertices)
-  {
+  if (_mst.numVertices != shared->_g->numVertices){
     while (shared->_nodeColorArray.at(eje.nodoDestino) == _threadCreationIdx)
     {
       eje = _mstEjes.top();
