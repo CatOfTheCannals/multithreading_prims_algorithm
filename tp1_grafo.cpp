@@ -649,6 +649,9 @@ void mstParalelo(Grafo *g, int cantThreads)
     return;
   }
 
+  cout << "exp_result: qty_nodes = "<< g->numVertices << endl;
+  cout << "exp_result: qty_edges = "<< g->numEjes << endl;
+
   // Se crean los threads
   pthread_t threads[cantThreads];
   // Se inicializan las estructuras globales
