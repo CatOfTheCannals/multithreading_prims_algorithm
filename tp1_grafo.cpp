@@ -80,7 +80,7 @@ public:
 
 // Imprimir el grafo resultado durante los experimentos
 bool imprimirResultado = false;
-bool _verbose=false;
+bool _verbose = false;
 // Se sugieren usar variables (unas atómicas y otras no) para:
 
 // Contener el estado global de la estructura de threads.
@@ -229,8 +229,7 @@ void Thread::msgLog(string msg){
 }
 
 // Iniciar un thread.
-void Thread::processThread(sharedData *shared, unordered_map<pthread_t, Thread> *threadObjects)
-{
+void Thread::processThread(sharedData *shared, unordered_map<pthread_t, Thread> *threadObjects){
   msgLog("Entré a processThread");
   bool procesado = true;
   if (_mstEjes.size() > 0){
@@ -244,6 +243,10 @@ void Thread::processThread(sharedData *shared, unordered_map<pthread_t, Thread> 
         tome_mutex = true;
         procesado = procesarNodo(eje, shared, threadObjects);
         pthread_mutex_unlock(&shared->_nodesMutexes.at(eje.nodoDestino));
+      }
+      if (_die){
+        msgLog("Debo morir");
+        time_to_die();
       }
       procesado = procesado && tome_mutex;
       //msgLog("unlock processThread");
@@ -319,8 +322,7 @@ bool Thread::procesarNodo(Eje eje, sharedData *shared, unordered_map<pthread_t, 
     if (pthread_mutex_trylock(&shared->_threadsMutexes.at(_threadCreationIdx)) == 0)
     {
       msgLog("lock1 procesarNodo");
-      if (pthread_mutex_trylock(&shared->_threadsMutexes.at(node_color)) == 0)
-      {
+      if (pthread_mutex_trylock(&shared->_threadsMutexes.at(node_color)) == 0){
         msgLog("lock2 procesarNodo");
         if (node_color == shared->_nodeColorArray.at(eje.nodoDestino)){
 
@@ -332,17 +334,17 @@ bool Thread::procesarNodo(Eje eje, sharedData *shared, unordered_map<pthread_t, 
 
           msgLog(" pido merge");
           while (!_merged){}
+          pthread_mutex_unlock(&shared->_threadsMutexes.at(node_color));
+          msgLog("unlock2 procesarNodo");
           msgLog(" me atendieron y _merged es " + to_string(_merged));
           merge_solved = true;
+        } else {
+          pthread_mutex_unlock(&shared->_threadsMutexes.at(node_color));
         }
-      }
+      } 
       pthread_mutex_unlock(&shared->_threadsMutexes.at(_threadCreationIdx));
       msgLog("unlock1 procesarNodo");
       _merged = false;
-    }
-    if (_die){
-      msgLog("Debo morir luego de encolarme");
-      time_to_die();
     }
     return res && merge_solved;
   }
@@ -387,13 +389,12 @@ void Thread::requestMerge(sharedData *shared, unordered_map<pthread_t, Thread> *
   // Solo se pueden agregar a la cola si el padre no está siendo fusionado por otro thread."""
   //cout << "Espero por " << other->_threadCreationIdx << " y soy " << _threadCreationIdx << endl;
   other->_request_queue.push(make_pair((&((*threadObjects)[_threadCreationIdx])), eje));
-  pthread_mutex_unlock(&shared->_threadsMutexes.at(node_color));
-  msgLog("unlock2 procesarNodo");
+
 }
 
 void Thread::fagocitar(Thread *other, Eje eje, sharedData *shared, unordered_map<pthread_t, Thread> *threadObjects)
 {
-  msgLog("Fagocito");
+  msgLog("Fagocito a " + to_string(other->_threadCreationIdx));
   msgLog("Eje que provocó el merge" + to_string(eje.nodoOrigen) + "----" + to_string(eje.nodoDestino));
   if(_verbose){
     cout << "Mi grafo " << endl;
@@ -453,8 +454,7 @@ void Thread::fagocitar(Thread *other, Eje eje, sharedData *shared, unordered_map
   msgLog("Transferí requests");
 
   // le pinto los nodos de mi color
-  for (int i = 0; i < shared->_nodeColorArray.size(); ++i)
-  {
+  for (int i = 0; i < shared->_nodeColorArray.size(); ++i){
     if (shared->_nodeColorArray[i] == other->_threadCreationIdx)
     {
       shared->_nodeColorArray[i] = _threadCreationIdx;
@@ -527,8 +527,7 @@ int buscarNodoLibre()
 }
 
 // Gestión principal del thread. Contiene el ciclo que le permite a cada thread hacer sus funciones.
-void *mstParaleloThread(void *p)
-{
+void *mstParaleloThread(void *p){
 
   pair<unordered_map<pthread_t, Thread>, sharedData> *sharedPair = (pair<unordered_map<pthread_t, Thread>, sharedData> *)p;
   sharedData *shared = &sharedPair->second;
@@ -626,7 +625,7 @@ void *mstParaleloThread(void *p)
 
 void mstParalelo(Grafo *g, int cantThreads)
 {
-  // system("./borrar_logs.sh"); // con el flag verbose no hace falta automatizar esto. aviso que rompe dependiendo del path en el que corras desde python ==> es gede
+  system("./borrar_logs.sh"); // con el flag verbose no hace falta automatizar esto. aviso que rompe dependiendo del path en el que corras desde python ==> es gede
 
   //Verificar cantidad de threads para ejecutar el algoritmo
   //cout << "Estoy en mstParalelo y el tamaño del mapa es: " << g->listaDeAdyacencias.size() << endl;
@@ -708,7 +707,7 @@ void resetExperimentacion()
 
 void experimentacion()
 {
-  imprimirResultado = false;
+  imprimirResultado = true;
   std::cout << "instancia,n,grafo,threads, tiempo" << std::endl;
   int instancia = 0;
   string grafo;
