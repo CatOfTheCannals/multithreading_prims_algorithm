@@ -278,7 +278,9 @@ void Thread::processThread(sharedData *shared, unordered_map<pthread_t, Thread> 
   }
   if (getMst()->numVertices == shared->_g->numVertices)
   { // thread contiene todos los nodos del grafo ==> thread ganador
-    cout << "Printeando el grafo obtenido por el thread ganador" << endl;
+    if(_verbose){
+      cout << "Printeando el grafo obtenido por el thread ganador" << endl;
+    }
     pthread_mutex_lock(&shared->_mergeCounterMutex);
     getMst()->setCantMerges(shared->_mergeCounter);
     pthread_mutex_unlock(&shared->_mergeCounterMutex);
@@ -393,9 +395,13 @@ void Thread::fagocitar(Thread *other, Eje eje, sharedData *shared, unordered_map
 {
   msgLog("Fagocito");
   msgLog("Eje que provocó el merge" + to_string(eje.nodoOrigen) + "----" + to_string(eje.nodoDestino));
-  cout << "Mi grafo " << endl;
+  if(_verbose){
+    cout << "Mi grafo " << endl;
+  }
   _mst.imprimirGrafo();
-  cout << "El grafo de other " << endl;
+  if(_verbose){
+     cout << "El grafo de other " << endl; 
+  }
   other->_mst.imprimirGrafo();
   // nodos
   for (auto const &x : other->_mst.listaDeAdyacencias)
@@ -483,10 +489,13 @@ void Thread::fagocitar(Thread *other, Eje eje, sharedData *shared, unordered_map
   msgLog("other reiniciado");
   //msgLog(to_string((long)other->_threadCreationIdx) + " y en top the other queda el eje " + to_string(other->_mstEjes.top().nodoOrigen) + "----" + to_string(other->_mstEjes.top().nodoDestino));
   //msgLog(to_string((long)_threadCreationIdx) + " y en mi top queda el eje " + to_string(_mstEjes.top().nodoOrigen) + "----" + to_string(_mstEjes.top().nodoDestino));
-
-  cout << "Mi grafo al final " << endl;
+  if(_verbose){
+    cout << "Mi grafo al final " << endl;
+  }
   _mst.imprimirGrafo();
-  cout << "El grafo de other al final " << endl;
+  if(_verbose){
+     cout << "El grafo de other al final " << endl; 
+  }
   other->_mst.imprimirGrafo();
 }
 
@@ -531,7 +540,7 @@ void *mstParaleloThread(void *p)
   pthread_t tid = pthread_self();
 
   //msgLog(" voy a crear mi mutex");
-  cout << "Soy " + to_string((long) tid) + " y creo mi mutex" << endl;
+  //cout << "Soy " + to_string((long) tid) + " y creo mi mutex" << endl;
 
   pthread_mutex_t mu;
   pthread_mutex_lock(&(shared->_mapMutex));
@@ -540,8 +549,8 @@ void *mstParaleloThread(void *p)
   //cout << "Paso 3: Listo" << endl;
 
   //msgLog("voy a crear mi objeto thread");
-
-  cout << "Soy " + to_string((long) tid) + " y creo mi objeto thread" << endl;
+  
+  //cout << "Soy " + to_string((long) tid) + " y creo mi objeto thread" << endl;
 
   pthread_mutex_lock(&(shared->_threadCreationMutex));
   (*threadObjects)[tid] = Thread();
@@ -564,7 +573,7 @@ void *mstParaleloThread(void *p)
 
   //((*threadObjects)[tid].getMst())->imprimirGrafo();
 
-  cout << "Soy " + to_string((long) tid) + " y mi init fue exitoso" << endl;
+  //cout << "Soy " + to_string((long) tid) + " y mi init fue exitoso" << endl;
 
   pthread_mutex_unlock(&(shared->_initMutex));
 
@@ -675,7 +684,7 @@ void mstParalelo(Grafo *g, int cantThreads)
   pair<unordered_map<pthread_t, Thread>, sharedData> pair = make_pair(threadObjects, shared);
   //cout << "Paso 1: Listo" << endl;
   // Se deben usar pthread_create y pthread_join.
-  cout << "Inicializo los llamados" << endl;
+  //cout << "Inicializo los llamados" << endl;
   for (int threadIdx = 0; threadIdx < cantThreads; ++threadIdx)
   {
     pthread_create(&threads[threadIdx], NULL, mstParaleloThread, &pair); // TODO(charli): pasar todo lo que es memoria compartida
