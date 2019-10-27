@@ -119,19 +119,19 @@ void Grafo::imprimirGrafo() {
     }
 
     for (auto v = listaDeAdyacencias.begin() ; v != listaDeAdyacencias.end(); ++v) {
-      // cout << "\t" << v->first << ": - ";
+       cout << "\t" << v->first << ": - ";
       for(const Eje &Eje : v->second) {
-        // cout << "(" << Eje.nodoDestino << "," << Eje.peso << ") - ";
+        cout << "(" << Eje.nodoDestino << "," << Eje.peso << ") - ";
       }
-      // cout << endl;
+        cout << endl;
     }
-    // cout << "Cantidad de nodos: " << numVertices << endl;
-    // cout << "Cantidad de ejes: " << numEjes << endl;
-    // cout << "Peso del arbol: " << peso << endl;
+      cout << "Cantidad de nodos: " << numVertices << endl;
+      cout << "Cantidad de ejes: " << numEjes << endl;
+      cout << "Peso del arbol: " << peso << endl;
     if(this->esConexo()){
-      // cout << "El grafo es conexo" << endl;
+      cout << "El grafo es conexo" << endl;
     }else{
-      // cout << "El grafo no es conexo" << endl;
+      cout << "El grafo no es conexo" << endl;
     }
   }
   cout << "exp_result: qty_merges = "<< _cantMerges << endl;
