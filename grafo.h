@@ -39,6 +39,7 @@ class Grafo {
 public:
   int numVertices;
   int numEjes;
+  bool _verbose = false;
 
   map<int,vector<Eje>> listaDeAdyacencias;
   bool _finalizo=false;
