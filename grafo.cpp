@@ -126,6 +126,9 @@ void Grafo::imprimirGrafo() {
   }else{
     cout << "El grafo no es conexo" << endl;
   }
+  if(_finalizo){
+    cout << "exp_result: qty_merges = "<< _cantMerges << endl;
+  }
 }
 
 bool Grafo::esConexo(){
@@ -151,4 +154,12 @@ bool Grafo::esConexo(){
         }
     }
     return nodosPintados == numVertices;
+}
+
+void Grafo::setFinalizo(bool finalizo){
+  _finalizo=finalizo;
+}
+
+void Grafo::setCantMerges(int cantMerges){
+  _cantMerges=cantMerges;
 }

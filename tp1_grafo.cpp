@@ -33,6 +33,8 @@ struct sharedData
   pthread_mutex_t _threadCreationMutex = PTHREAD_MUTEX_INITIALIZER;
   pthread_mutex_t _freeNodesMutex = PTHREAD_MUTEX_INITIALIZER;
   pthread_barrier_t _initBarrier;
+  pthread_mutex_t _mergeCounterMutex= PTHREAD_MUTEX_INITIALIZER;
+  int _mergeCounter=0;
 };
 
 class Thread
@@ -277,9 +279,11 @@ void Thread::processThread(sharedData *shared, unordered_map<pthread_t, Thread> 
   if (getMst()->numVertices == shared->_g->numVertices)
   { // thread contiene todos los nodos del grafo ==> thread ganador
     cout << "Printeando el grafo obtenido por el thread ganador" << endl;
+    pthread_mutex_lock(&shared->_mergeCounterMutex);
+    getMst()->setCantMerges(shared->_mergeCounter);
+    pthread_mutex_unlock(&shared->_mergeCounterMutex);
+    getMst()->setFinalizo(true);
     getMst()->imprimirGrafo();
-    int numero = 5;
-    cout << "exp_result: qty_merges = " << numero << endl;
   }
   time_to_die();
 }
@@ -489,6 +493,9 @@ void Thread::fagocitar(Thread *other, Eje eje, sharedData *shared, unordered_map
 // Realizar la fusión
 void Thread::merge(pair<Thread *, Eje> req, sharedData *shared, unordered_map<pthread_t, Thread> *threadObjects)
 {
+    pthread_mutex_lock(&(shared->_mergeCounterMutex));
+  shared->_mergeCounter++;
+  pthread_mutex_unlock(&(shared->_mergeCounterMutex));
   //msgLog(" mergeo");
   //other->_merged=false; // Habría que setearlo en true al final para avisarle al otro thread que terminó el merge
   if (_threadCreationIdx > req.first->_threadCreationIdx)

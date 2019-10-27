@@ -41,6 +41,8 @@ public:
   int numEjes;
 
   map<int,vector<Eje>> listaDeAdyacencias;
+  bool _finalizo=false;
+  int _cantMerges =0;
 
   Grafo() {
     numVertices = 0;
@@ -57,6 +59,8 @@ public:
   void insertarNodo(int nodo);
   bool noEsta(int nodo);
   void limpiarAuxiliares();
+  void setFinalizo(bool finalizo);
+  void setCantMerges(int cantMerges);
   
 private:
   void incrementarTotalNodos();
