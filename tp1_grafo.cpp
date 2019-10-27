@@ -35,6 +35,7 @@ struct sharedData
   pthread_barrier_t _initBarrier;
   pthread_mutex_t _mergeCounterMutex= PTHREAD_MUTEX_INITIALIZER;
   int _mergeCounter=0;
+  bool _verbose = false;
 };
 
 class Thread
@@ -79,7 +80,7 @@ public:
 
 // Imprimir el grafo resultado durante los experimentos
 bool imprimirResultado = false;
-
+bool _verbose=false;
 // Se sugieren usar variables (unas atómicas y otras no) para:
 
 // Contener el estado global de la estructura de threads.
@@ -555,7 +556,7 @@ void *mstParaleloThread(void *p)
   pthread_mutex_lock(&(shared->_threadCreationMutex));
   (*threadObjects)[tid] = Thread();
   pthread_mutex_unlock(&(shared->_threadCreationMutex));
-
+  (*threadObjects)[tid]._verbose= shared->_verbose;
   pthread_mutex_unlock(&(shared->_mapMutex));
   //(*threadObjects)[tid].msgLog("Creación de thread exitosa");
   //cout << "Paso 4: Listo" << endl;
@@ -683,6 +684,7 @@ void mstParalelo(Grafo *g, int cantThreads)
   shared._nodesMutexes = nodesMutexes;
   shared._threadsMutexes = threadsMutexes;
   shared._freeNodes = freeNodes;
+  shared._verbose=_verbose;
   pthread_barrier_init(&(shared._initBarrier), NULL, cantThreads);
   pair<unordered_map<pthread_t, Thread>, sharedData> pair = make_pair(threadObjects, shared);
   //cout << "Paso 1: Listo" << endl;

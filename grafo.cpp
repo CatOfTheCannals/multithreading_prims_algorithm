@@ -20,7 +20,9 @@ int Grafo::inicializar(string nombreArchivo) {
   archivo >> numEjesArchivo;
 
   listaDeAdyacencias = map<int,vector<Eje>>();
+  if(_verbose){
   cout << "Número de aristas: " << numEjesArchivo << endl;
+  }
   int v1, v2, peso;
   // Crear los ejes entre ambos nodos
   for(int ejes = 0; ejes < numEjesArchivo; ejes++){
@@ -34,7 +36,9 @@ int Grafo::inicializar(string nombreArchivo) {
 
     insertarEje(v1,v2,peso);
   }
+  if(_verbose){
   cout << "Estoy creando el grafo y el tamaño del mapa es: " << listaDeAdyacencias.size() << endl;
+  }
   archivo.close();
   return 1;
 }
@@ -58,7 +62,9 @@ void Grafo::insertarEje(Eje e){
     }
   }
   if(!agregado){
+    if(_verbose){
     cout << "Incremento por el eje " << e.nodoOrigen << "----" << e.nodoDestino << endl;
+    }
     incrementarTotalEjes();
   }
 }
@@ -101,33 +107,35 @@ void Grafo::incrementarTotalEjes(){
 }
 
 void Grafo::imprimirGrafo() {
-  int size = listaDeAdyacencias.size();
-  int peso = 0;
-  for (auto v = listaDeAdyacencias.begin() ; v != listaDeAdyacencias.end(); ++v){
-      for(const Eje &Eje : v->second) {
-          if (Eje.nodoDestino > v->first){
-              peso += Eje.peso;
-          }
-      }
-  }
-
-  for (auto v = listaDeAdyacencias.begin() ; v != listaDeAdyacencias.end(); ++v) {
-    cout << "\t" << v->first << ": - ";
-    for(const Eje &Eje : v->second) {
-      cout << "(" << Eje.nodoDestino << "," << Eje.peso << ") - ";
+  if(_verbose){
+    int size = listaDeAdyacencias.size();
+    int peso = 0;
+    for (auto v = listaDeAdyacencias.begin() ; v != listaDeAdyacencias.end(); ++v){
+        for(const Eje &Eje : v->second) {
+            if (Eje.nodoDestino > v->first){
+                peso += Eje.peso;
+            }
+        }
     }
-    cout << endl;
-  }
-  cout << "Cantidad de nodos: " << numVertices << endl;
-  cout << "Cantidad de ejes: " << numEjes << endl;
-  cout << "Peso del arbol: " << peso << endl;
-  if(this->esConexo()){
-    cout << "El grafo es conexo" << endl;
-  }else{
-    cout << "El grafo no es conexo" << endl;
-  }
-  if(_finalizo){
-    cout << "exp_result: qty_merges = "<< _cantMerges << endl;
+
+    for (auto v = listaDeAdyacencias.begin() ; v != listaDeAdyacencias.end(); ++v) {
+      cout << "\t" << v->first << ": - ";
+      for(const Eje &Eje : v->second) {
+        cout << "(" << Eje.nodoDestino << "," << Eje.peso << ") - ";
+      }
+      cout << endl;
+    }
+    cout << "Cantidad de nodos: " << numVertices << endl;
+    cout << "Cantidad de ejes: " << numEjes << endl;
+    cout << "Peso del arbol: " << peso << endl;
+    if(this->esConexo()){
+      cout << "El grafo es conexo" << endl;
+    }else{
+      cout << "El grafo no es conexo" << endl;
+    }
+    if(_finalizo){
+      cout << "exp_result: qty_merges = "<< _cantMerges << endl;
+    }
   }
 }
 
