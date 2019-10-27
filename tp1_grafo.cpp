@@ -278,6 +278,8 @@ void Thread::processThread(sharedData *shared, unordered_map<pthread_t, Thread> 
   { // thread contiene todos los nodos del grafo ==> thread ganador
     cout << "Printeando el grafo obtenido por el thread ganador" << endl;
     getMst()->imprimirGrafo();
+    int numero = 5;
+    cout << "exp_result: qty_merges = " << numero << endl;
   }
   time_to_die();
 }
