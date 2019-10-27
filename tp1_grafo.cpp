@@ -625,7 +625,7 @@ void *mstParaleloThread(void *p){
 
 void mstParalelo(Grafo *g, int cantThreads)
 {
-  system("./borrar_logs.sh"); // con el flag verbose no hace falta automatizar esto. aviso que rompe dependiendo del path en el que corras desde python ==> es gede
+  //system("./borrar_logs.sh"); // con el flag verbose no hace falta automatizar esto. aviso que rompe dependiendo del path en el que corras desde python ==> es gede
 
   //Verificar cantidad de threads para ejecutar el algoritmo
   //cout << "Estoy en mstParalelo y el tamaño del mapa es: " << g->listaDeAdyacencias.size() << endl;
