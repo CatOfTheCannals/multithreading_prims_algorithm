@@ -43,7 +43,7 @@ public:
   {
     _merged = false;
     _die = false;
-    _verbose = true;
+    _verbose = false;
 
   };
   Thread &operator=(Thread other);
@@ -72,11 +72,11 @@ public:
   queue<pair<Thread *, Eje>> _request_queue; //TODO(charli): agregar eje como segundo elem
   bool _merged;
   bool _die;
-  bool _verbose = true;
+  bool _verbose = false;
 };
 
 // Imprimir el grafo resultado durante los experimentos
-bool imprimirResultado = true;
+bool imprimirResultado = false;
 
 // Se sugieren usar variables (unas atómicas y otras no) para:
 
@@ -174,8 +174,9 @@ void Thread::time_to_die()
       new_filename_char[new_filename.length()] = '\0';
   
       rename(filename_char, new_filename_char);
-      pthread_exit(0);
+      
     }
+    pthread_exit(0);
 }
 
 // Iniciar un thread.
