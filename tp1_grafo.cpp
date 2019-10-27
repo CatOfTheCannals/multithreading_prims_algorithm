@@ -75,12 +75,12 @@ public:
   queue<pair<Thread *, Eje>> _request_queue; //TODO(charli): agregar eje como segundo elem
   bool _merged;
   bool _die;
-  bool _verbose;
+  bool _verbose = false;
 };
 
 // Imprimir el grafo resultado durante los experimentos
 bool imprimirResultado = false;
-bool _verbose=false;
+bool _verbose = false;
 // Se sugieren usar variables (unas atómicas y otras no) para:
 
 // Contener el estado global de la estructura de threads.
@@ -334,6 +334,8 @@ bool Thread::procesarNodo(Eje eje, sharedData *shared, unordered_map<pthread_t, 
 
           msgLog(" pido merge");
           while (!_merged){}
+          pthread_mutex_unlock(&shared->_threadsMutexes.at(node_color));
+          msgLog("unlock2 procesarNodo");
           msgLog(" me atendieron y _merged es " + to_string(_merged));
           merge_solved = true;
         } else {
@@ -387,8 +389,7 @@ void Thread::requestMerge(sharedData *shared, unordered_map<pthread_t, Thread> *
   // Solo se pueden agregar a la cola si el padre no está siendo fusionado por otro thread."""
   //cout << "Espero por " << other->_threadCreationIdx << " y soy " << _threadCreationIdx << endl;
   other->_request_queue.push(make_pair((&((*threadObjects)[_threadCreationIdx])), eje));
-  pthread_mutex_unlock(&shared->_threadsMutexes.at(node_color));
-  msgLog("unlock2 procesarNodo");
+
 }
 
 void Thread::fagocitar(Thread *other, Eje eje, sharedData *shared, unordered_map<pthread_t, Thread> *threadObjects)
@@ -454,7 +455,8 @@ void Thread::fagocitar(Thread *other, Eje eje, sharedData *shared, unordered_map
 
   // le pinto los nodos de mi color
   for (int i = 0; i < shared->_nodeColorArray.size(); ++i){
-    if (shared->_nodeColorArray[i] == other->_threadCreationIdx){
+    if (shared->_nodeColorArray[i] == other->_threadCreationIdx)
+    {
       shared->_nodeColorArray[i] = _threadCreationIdx;
     }
   }
@@ -623,7 +625,7 @@ void *mstParaleloThread(void *p){
 
 void mstParalelo(Grafo *g, int cantThreads)
 {
-  //system("./borrar_logs.sh"); // con el flag verbose no hace falta automatizar esto. aviso que rompe dependiendo del path en el que corras desde python ==> es gede
+  system("./borrar_logs.sh"); // con el flag verbose no hace falta automatizar esto. aviso que rompe dependiendo del path en el que corras desde python ==> es gede
 
   //Verificar cantidad de threads para ejecutar el algoritmo
   //cout << "Estoy en mstParalelo y el tamaño del mapa es: " << g->listaDeAdyacencias.size() << endl;
