@@ -42,7 +42,6 @@ public:
   bool _verbose = false;
 
   map<int,vector<Eje>> listaDeAdyacencias;
-  bool _finalizo=false;
   int _cantMerges =0;
 
   Grafo() {
@@ -60,7 +59,6 @@ public:
   void insertarNodo(int nodo);
   bool noEsta(int nodo);
   void limpiarAuxiliares();
-  void setFinalizo(bool finalizo);
   void setCantMerges(int cantMerges);
   
 private:

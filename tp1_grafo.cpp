@@ -285,7 +285,6 @@ void Thread::processThread(sharedData *shared, unordered_map<pthread_t, Thread> 
     pthread_mutex_lock(&shared->_mergeCounterMutex);
     getMst()->setCantMerges(shared->_mergeCounter);
     pthread_mutex_unlock(&shared->_mergeCounterMutex);
-    getMst()->setFinalizo(true);
     getMst()->imprimirGrafo();
   }
   time_to_die();
@@ -399,11 +398,11 @@ void Thread::fagocitar(Thread *other, Eje eje, sharedData *shared, unordered_map
   if(_verbose){
     cout << "Mi grafo " << endl;
   }
-  _mst.imprimirGrafo();
+  // _mst.imprimirGrafo();
   if(_verbose){
      cout << "El grafo de other " << endl; 
   }
-  other->_mst.imprimirGrafo();
+  // other->_mst.imprimirGrafo();
   // nodos
   for (auto const &x : other->_mst.listaDeAdyacencias)
   {
@@ -493,11 +492,11 @@ void Thread::fagocitar(Thread *other, Eje eje, sharedData *shared, unordered_map
   if(_verbose){
     cout << "Mi grafo al final " << endl;
   }
-  _mst.imprimirGrafo();
+  // _mst.imprimirGrafo();
   if(_verbose){
      cout << "El grafo de other al final " << endl; 
   }
-  other->_mst.imprimirGrafo();
+  // other->_mst.imprimirGrafo();
 }
 
 // Realizar la fusión
@@ -644,7 +643,7 @@ void mstParalelo(Grafo *g, int cantThreads)
     {
       cout << endl
            << "********** RESULTADO *********** " << endl;
-      Grafo().imprimirGrafo();
+      // Grafo().imprimirGrafo();
     }
 
     return;
