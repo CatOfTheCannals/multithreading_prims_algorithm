@@ -20,9 +20,6 @@ int Grafo::inicializar(string nombreArchivo) {
   archivo >> numEjesArchivo;
 
   listaDeAdyacencias = map<int,vector<Eje>>();
-  if(_verbose){
-  // cout << "Número de aristas: " << numEjesArchivo << endl;
-  }
   int v1, v2, peso;
   // Crear los ejes entre ambos nodos
   for(int ejes = 0; ejes < numEjesArchivo; ejes++){
@@ -35,9 +32,6 @@ int Grafo::inicializar(string nombreArchivo) {
     archivo >> v1 >> v2 >> peso;
 
     insertarEje(v1,v2,peso);
-  }
-  if(_verbose){
-  // cout << "Estoy creando el grafo y el tamaño del mapa es: " << listaDeAdyacencias.size() << endl;
   }
   archivo.close();
   return 1;
@@ -62,9 +56,6 @@ void Grafo::insertarEje(Eje e){
     }
   }
   if(!agregado){
-    if(_verbose){
-    // cout << "Incremento por el eje " << e.nodoOrigen << "----" << e.nodoDestino << endl;
-    }
     incrementarTotalEjes();
   }
 }
@@ -81,12 +72,9 @@ void Grafo::insertarEje(int nodoA, int nodoB, int peso){
     incrementarTotalEjes();
 }
 
-void Grafo::insertarNodo(int nodo){//} Eje* eje){
+void Grafo::insertarNodo(int nodo){
     //Creo el vector que será la lista de adyacencias del nodo
     vector<Eje> ejesN;
-    /*if(eje != NULL){
-         ejesN.push_back(*eje);
-    }*/
     //Inserto el par (nodo, lista) en el diccionario
     listaDeAdyacencias.insert({nodo, ejesN});
 
