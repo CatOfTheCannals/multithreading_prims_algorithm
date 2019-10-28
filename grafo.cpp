@@ -106,7 +106,7 @@ void Grafo::incrementarTotalEjes(){
   numEjes += 1;
 }
 
-void Grafo::imprimirGrafo() {
+void Grafo::imprimirGrafo(){
   if(_verbose){
     int size = listaDeAdyacencias.size();
     int peso = 0;
