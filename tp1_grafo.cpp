@@ -62,7 +62,6 @@ public:
   Eje getNextEdge(sharedData *shared);
   Grafo *getMst();
   bool procesarNodo(Eje eje, sharedData *shared, unordered_map<pthread_t, Thread> *threadObjects);
-  Thread tomarNodo(int nodo);
   void requestMerge(sharedData *shared, unordered_map<pthread_t, Thread> *threadObjects, Thread *other, Eje eje, pthread_t node_color);
   void merge(pair<Thread *, Eje> req, sharedData *shared, unordered_map<pthread_t, Thread> *threadObjects);
   void time_to_die();
@@ -80,21 +79,10 @@ public:
 // Imprimir el grafo resultado durante los experimentos
 bool imprimirResultado = false;
 bool _verbose = false;
-// Se sugieren usar variables (unas atómicas y otras no) para:
-
-// Contener el estado global de la estructura de threads.
-
-// Para coordinar el número de cada thread durante la inizializacion de threads.
-
-// Para para coordinar el id de cada thread durante la inizializacion y reinicializacion de threads.
-
-// Para coordinar las modificaciones de los colores.
-
-// Para contener la estructura global que indica el estado actual de cada nodo.
 
 void swap(Thread &lhs, Thread &rhs)
 {
-  using std::swap; // enable ADL
+  using std::swap;
 
   swap(lhs._mstEjes, rhs._mstEjes);
   swap(lhs._mst, rhs._mst);
@@ -168,6 +156,7 @@ void Thread::time_to_die()
       rename(filename_char, new_filename_char);
       
     }
+    // Termina la ejecución del thread
     pthread_exit(0);
 }
 
@@ -255,8 +244,7 @@ void Thread::processThread(sharedData *shared, unordered_map<pthread_t, Thread> 
   time_to_die();
 }
 
-void Thread::assignIdx(pthread_t threadCreationIdx)
-{
+void Thread::assignIdx(pthread_t threadCreationIdx){
   _threadCreationIdx = threadCreationIdx;
 }
 
@@ -294,13 +282,11 @@ bool Thread::procesarNodo(Eje eje, sharedData *shared, unordered_map<pthread_t, 
   }
 }
 
-pthread_t Thread::getIdx()
-{
+pthread_t Thread::getIdx(){
   return _threadCreationIdx;
 }
 
-Grafo *Thread::getMst()
-{
+Grafo *Thread::getMst(){
   return &_mst;
 }
 
@@ -317,19 +303,10 @@ Eje Thread::getNextEdge(sharedData *shared){
   return eje;
 }
 
-// Trata de reservar el nodo que se pasa como parametro para el thread
-
-Thread Thread::tomarNodo(int nodo)
-{
-
-  // TODO
-}
-
 // Procurar agregar el thread con mayor id a la cola de fusiones del thread con menor id
 void Thread::requestMerge(sharedData *shared, unordered_map<pthread_t, Thread> *threadObjects, Thread *other, Eje eje, pthread_t node_color){
-  // """TODO Se deben evitar race conditions, en los siguietes casos:
-  // Un nodo hijo no puede estar en la cola de fusiones de otro nodo.
-  // Solo se pueden agregar a la cola si el padre no está siendo fusionado por otro thread."""
+
+  // Se encola en el dueño del nodo
   other->_request_queue.push(make_pair((&((*threadObjects)[_threadCreationIdx])), eje));
 
 }
@@ -391,33 +368,22 @@ void Thread::fagocitar(Thread *other, Eje eje, sharedData *shared, unordered_map
   other->_mst = Grafo();
 
   other->reiniciarThread(shared, threadObjects);
-
 }
 
 // Realizar la fusión
-void Thread::merge(pair<Thread *, Eje> req, sharedData *shared, unordered_map<pthread_t, Thread> *threadObjects)
-{
-    pthread_mutex_lock(&(shared->_mergeCounterMutex));
+void Thread::merge(pair<Thread *, Eje> req, sharedData *shared, unordered_map<pthread_t, Thread> *threadObjects){
+  /*pthread_mutex_lock(&(shared->_mergeCounterMutex));
   shared->_mergeCounter++;
-  pthread_mutex_unlock(&(shared->_mergeCounterMutex));
+  pthread_mutex_unlock(&(shared->_mergeCounterMutex));*/
  
-   if (_threadCreationIdx > req.first->_threadCreationIdx)
-  {
+  if (_threadCreationIdx < req.first->_threadCreationIdx){
     // yo ingiero al other
     fagocitar(req.first, req.second, shared, threadObjects);
-  }
-  else
-  {
+  } else {
     // el other me ingiere
     req.first->fagocitar(&((*threadObjects)[_threadCreationIdx]), req.second, shared, threadObjects);
   }
   req.first->_merged = true;
-}
-
-// Para buscar un nodo libre en el grafo.
-int buscarNodoLibre()
-{
-  // TODO
 }
 
 // Gestión principal del thread. Contiene el ciclo que le permite a cada thread hacer sus funciones.
@@ -450,50 +416,6 @@ void *mstParaleloThread(void *p){
   pthread_mutex_unlock(&(shared->_initMutex));
 
   (*threadObjects)[tid].processThread(shared, threadObjects);
-  /*  
-    // Ciclo principal de cada thread
-    while(true){
-
-        break; // TODO(charli): sacar esto cuando agreguemos
-
-        // Se termina la ejecución si el grafo ya no tiene vertices libres. Se imprime el resultado y se termina el thread
-
-        // Si el thread está en la cola de fusiones de otro thread, lo notifica que puede fusionarse.
-
-        // Se deben usar mecanismos de sincronización.
-
-        // TO DO
-
-        // Si otro thread me está fusionando, esperar a que termine.
-
-                  // Reinicializo las estructuras del thread y arranco de nuevo.
-
-        // Si tiene elementos en la cola de fusion, debe fusionarlos.
-
-             // Se busca el nodo más cercano que no esté en el árbol, pero que sea alcanzable
-                  // nodoActual = buscarNodo(thread);
-
-             // Se procura reservar el nodo que se quiere tomar, indicando la apropiación en la estructura usada.
-
-                 // Thread info = tomarNodo(nodoActual, thread);
-
-       //Si se logra tomar, se procesa.
-
-             //Si el nodo lo tiene otro thread, se tiene que fusionar
-
-             //Espero hasta que liberen mi mutex -> para el thread i tengo threadsMutexes[i].wait()
-
-             //Acá no me llegan más request
-
-             // pregunto si el thread al que quiero hacer request esta bloqueado -> para el thread i intentando hacer request al j pthread_mutex_trylock(threadsMutexes[j])
-                 // si?
-                     // si me pidieron merges, los resuelvo y me restarteo -> atiendo cola
-                 // no?
-                     // entonces me encolo y me quedo esperando a que se resuelva el merge o me pidan algo -> para el thread i intentando pintar el nodo b desde el a requestMerge(threadObjects[j], a, b )
-
-                  //requestFuse(.....);
-    }
-    */
 }
 
 void mstParalelo(Grafo *g, int cantThreads)
@@ -516,10 +438,10 @@ void mstParalelo(Grafo *g, int cantThreads)
 
     return;
   }
-
+  /*
   cout << "exp_result: qty_nodes = "<< g->numVertices << endl;
   cout << "exp_result: qty_edges = "<< g->numEjes << endl;
-
+  */
   // Se crean los threads
   pthread_t threads[cantThreads];
   // Se inicializan las estructuras globales

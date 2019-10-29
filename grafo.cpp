@@ -122,7 +122,7 @@ void Grafo::imprimirGrafo(){
       cout << "El grafo no es conexo" << endl;
     }
   }
-  cout << "exp_result: qty_merges = "<< _cantMerges << endl;
+  //cout << "exp_result: qty_merges = "<< _cantMerges << endl;
 }
 
 bool Grafo::esConexo(){
