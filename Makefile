@@ -95,91 +95,91 @@ testSecuencialEstrella1000: TP1
 	./TP1 test/estrella/estrella1000.txt secuencial
 
 testSecuencialListaEnlazada100: TP1
-	./TP1 test/listaenlazada/listaenlazada100.txt secuencial
+	./TP1 test/lista_enlazada/lista_enlazada100.txt secuencial
 
 testSecuencialListaEnlazada200: TP1
-	./TP1 test/listaenlazada/listaenlazada200.txt secuencial
+	./TP1 test/lista_enlazada/lista_enlazada200.txt secuencial
 
 testSecuencialListaEnlazada300: TP1
-	./TP1 test/listaenlazada/listaenlazada300.txt secuencial
+	./TP1 test/lista_enlazada/lista_enlazada300.txt secuencial
 
 testSecuencialListaEnlazada400: TP1
-	./TP1 test/listaenlazada/listaenlazada400.txt secuencial
+	./TP1 test/lista_enlazada/lista_enlazada400.txt secuencial
 
 testSecuencialListaEnlazada500: TP1
-	./TP1 test/listaenlazada/listaenlazada500.txt secuencial
+	./TP1 test/lista_enlazada/lista_enlazada500.txt secuencial
 
 testSecuencialListaEnlazada600: TP1
-	./TP1 test/listaenlazada/listaenlazada600.txt secuencial
+	./TP1 test/lista_enlazada/lista_enlazada600.txt secuencial
 
 testSecuencialListaEnlazada700: TP1
-	./TP1 test/listaenlazada/listaenlazada700.txt secuencial
+	./TP1 test/lista_enlazada/lista_enlazada700.txt secuencial
 
 testSecuencialListaEnlazada800: TP1
-	./TP1 test/listaenlazada/listaenlazada800.txt secuencial
+	./TP1 test/lista_enlazada/lista_enlazada800.txt secuencial
 
 testSecuencialListaEnlazada900: TP1
-	./TP1 test/listaenlazada/listaenlazada900.txt secuencial
+	./TP1 test/lista_enlazada/lista_enlazada900.txt secuencial
 
 testSecuencialListaEnlazada1000: TP1
-	./TP1 test/listaenlazada/listaenlazada1000.txt secuencial
+	./TP1 test/lista_enlazada/lista_enlazada1000.txt secuencial
 
-testSecuencialEstrella100: TP1
-	./TP1 test/estrella/estrella100.txt secuencial
+testParaleloEstrella100: TP1
+	./TP1 test/estrella/estrella100.txt $(threads)
 
-testSecuencialEstrella200: TP1
-	./TP1 test/estrella/estrella200.txt secuencial
+testParaleloEstrella200: TP1
+	./TP1 test/estrella/estrella200.txt $(threads)
 
-testSecuencialEstrella300: TP1
-	./TP1 test/estrella/estrella300.txt secuencial
+testParaleloEstrella300: TP1
+	./TP1 test/estrella/estrella300.txt $(threads)
 
-testSecuencialEstrella400: TP1
-	./TP1 test/estrella/estrella400.txt secuencial
+testParaleloEstrella400: TP1
+	./TP1 test/estrella/estrella400.txt $(threads)
 
-testSecuencialEstrella500: TP1
-	./TP1 test/estrella/estrella500.txt secuencial
+testParaleloEstrella500: TP1
+	./TP1 test/estrella/estrella500.txt $(threads)
 
-testSecuencialEstrella600: TP1
-	./TP1 test/estrella/estrella600.txt secuencial
+testParaleloEstrella600: TP1
+	./TP1 test/estrella/estrella600.txt $(threads)
 
-testSecuencialEstrella700: TP1
-	./TP1 test/estrella/estrella700.txt secuencial
+testParaleloEstrella700: TP1
+	./TP1 test/estrella/estrella700.txt $(threads)
 
-testSecuencialEstrella800: TP1
-	./TP1 test/estrella/estrella800.txt secuencial
+testParaleloEstrella800: TP1
+	./TP1 test/estrella/estrella800.txt $(threads)
 
-testSecuencialEstrella900: TP1
-	./TP1 test/estrella/estrella900.txt secuencial
+testParaleloEstrella900: TP1
+	./TP1 test/estrella/estrella900.txt $(threads)
 
-testSecuencialEstrella1000: TP1
-	./TP1 test/estrella/estrella1000.txt secuencial
+testParaleloEstrella1000: TP1
+	./TP1 test/estrella/estrella1000.txt $(threads)
 
-testSecuencialListaEnlazada100: TP1
-	./TP1 test/listaenlazada/listaenlazada100.txt secuencial
+testParaleloListaEnlazada100: TP1
+	./TP1 test/lista_enlazada/lista_enlazada100.txt $(threads)
 
-testSecuencialListaEnlazada200: TP1
-	./TP1 test/listaenlazada/listaenlazada200.txt secuencial
+testParaleloListaEnlazada200: TP1
+	./TP1 test/lista_enlazada/lista_enlazada200.txt $(threads)
 
-testSecuencialListaEnlazada300: TP1
-	./TP1 test/listaenlazada/listaenlazada300.txt secuencial
+testParaleloListaEnlazada300: TP1
+	./TP1 test/lista_enlazada/lista_enlazada300.txt $(threads)
 
-testSecuencialListaEnlazada400: TP1
-	./TP1 test/listaenlazada/listaenlazada400.txt secuencial
+testParaleloListaEnlazada400: TP1
+	./TP1 test/lista_enlazada/lista_enlazada400.txt $(threads)
 
-testSecuencialListaEnlazada500: TP1
-	./TP1 test/listaenlazada/listaenlazada500.txt secuencial
+testParaleloListaEnlazada500: TP1
+	./TP1 test/lista_enlazada/lista_enlazada500.txt $(threads)
 
-testSecuencialListaEnlazada600: TP1
-	./TP1 test/listaenlazada/listaenlazada600.txt secuencial
+testParaleloListaEnlazada600: TP1
+	./TP1 test/lista_enlazada/lista_enlazada600.txt $(threads)
 
-testSecuencialListaEnlazada700: TP1
-	./TP1 test/listaenlazada/listaenlazada700.txt secuencial
+testParaleloListaEnlazada700: TP1
+	./TP1 test/lista_enlazada/lista_enlazada700.txt $(threads)
 
-testSecuencialListaEnlazada800: TP1
-	./TP1 test/listaenlazada/listaenlazada800.txt secuencial
+testParaleloListaEnlazada800: TP1
+	./TP1 test/lista_enlazada/lista_enlazada800.txt $(threads)
 
-testSecuencialListaEnlazada900: TP1
-	./TP1 test/listaenlazada/listaenlazada900.txt secuencial
+testParaleloListaEnlazada900: TP1
+	./TP1 test/lista_enlazada/lista_enlazada900.txt $(threads)
 
-testSecuencialListaEnlazada1000: TP1
-	./TP1 test/listaenlazada/listaenlazada1000.txt secuencial
+testParaleloListaEnlazada1000: TP1
+	./TP1 test/lista_enlazada/lista_enlazada1000.txt $(threads)
