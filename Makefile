@@ -63,3 +63,126 @@ testSecuencialCompleto1000: TP1
 
 testSecuencialCompleto2000: TP1
 	./TP1 test/completo2000.txt secuencial
+
+testSecuencialEstrella100: TP1
+	./TP1 test/Estrella/Estrella100.txt secuencial
+
+testSecuencialEstrella200: TP1
+	./TP1 test/Estrella/Estrella200.txt secuencial
+
+testSecuencialEstrella300: TP1
+	./TP1 test/Estrella/Estrella300.txt secuencial
+
+testSecuencialEstrella400: TP1
+	./TP1 test/Estrella/Estrella400.txt secuencial
+
+testSecuencialEstrella500: TP1
+	./TP1 test/Estrella/Estrella500.txt secuencial
+
+testSecuencialEstrella600: TP1
+	./TP1 test/Estrella/Estrella600.txt secuencial
+
+testSecuencialEstrella700: TP1
+	./TP1 test/Estrella/Estrella700.txt secuencial
+
+testSecuencialEstrella800: TP1
+	./TP1 test/Estrella/Estrella800.txt secuencial
+
+testSecuencialEstrella900: TP1
+	./TP1 test/Estrella/Estrella900.txt secuencial
+
+testSecuencialEstrella1000: TP1
+	./TP1 test/Estrella/Estrella1000.txt secuencial
+
+testSecuencialListaEnlazada100: TP1
+	./TP1 test/ListaEnlazada/ListaEnlazada100.txt secuencial
+
+testSecuencialListaEnlazada200: TP1
+	./TP1 test/ListaEnlazada/ListaEnlazada200.txt secuencial
+
+testSecuencialListaEnlazada300: TP1
+	./TP1 test/ListaEnlazada/ListaEnlazada300.txt secuencial
+
+testSecuencialListaEnlazada400: TP1
+	./TP1 test/ListaEnlazada/ListaEnlazada400.txt secuencial
+
+testSecuencialListaEnlazada500: TP1
+	./TP1 test/ListaEnlazada/ListaEnlazada500.txt secuencial
+
+testSecuencialListaEnlazada600: TP1
+	./TP1 test/ListaEnlazada/ListaEnlazada600.txt secuencial
+
+testSecuencialListaEnlazada700: TP1
+	./TP1 test/ListaEnlazada/ListaEnlazada700.txt secuencial
+
+testSecuencialListaEnlazada800: TP1
+	./TP1 test/ListaEnlazada/ListaEnlazada800.txt secuencial
+
+testSecuencialListaEnlazada900: TP1
+	./TP1 test/ListaEnlazada/ListaEnlazada900.txt secuencial
+
+testSecuencialListaEnlazada1000: TP1
+	./TP1 test/ListaEnlazada/ListaEnlazada1000.txt secuencial
+
+
+
+testSecuencialEstrella100: TP1
+	./TP1 test/Estrella/Estrella100.txt secuencial
+
+testSecuencialEstrella200: TP1
+	./TP1 test/Estrella/Estrella200.txt secuencial
+
+testSecuencialEstrella300: TP1
+	./TP1 test/Estrella/Estrella300.txt secuencial
+
+testSecuencialEstrella400: TP1
+	./TP1 test/Estrella/Estrella400.txt secuencial
+
+testSecuencialEstrella500: TP1
+	./TP1 test/Estrella/Estrella500.txt secuencial
+
+testSecuencialEstrella600: TP1
+	./TP1 test/Estrella/Estrella600.txt secuencial
+
+testSecuencialEstrella700: TP1
+	./TP1 test/Estrella/Estrella700.txt secuencial
+
+testSecuencialEstrella800: TP1
+	./TP1 test/Estrella/Estrella800.txt secuencial
+
+testSecuencialEstrella900: TP1
+	./TP1 test/Estrella/Estrella900.txt secuencial
+
+testSecuencialEstrella1000: TP1
+	./TP1 test/Estrella/Estrella1000.txt secuencial
+
+testSecuencialListaEnlazada100: TP1
+	./TP1 test/ListaEnlazada/ListaEnlazada100.txt secuencial
+
+testSecuencialListaEnlazada200: TP1
+	./TP1 test/ListaEnlazada/ListaEnlazada200.txt secuencial
+
+testSecuencialListaEnlazada300: TP1
+	./TP1 test/ListaEnlazada/ListaEnlazada300.txt secuencial
+
+testSecuencialListaEnlazada400: TP1
+	./TP1 test/ListaEnlazada/ListaEnlazada400.txt secuencial
+
+testSecuencialListaEnlazada500: TP1
+	./TP1 test/ListaEnlazada/ListaEnlazada500.txt secuencial
+
+testSecuencialListaEnlazada600: TP1
+	./TP1 test/ListaEnlazada/ListaEnlazada600.txt secuencial
+
+testSecuencialListaEnlazada700: TP1
+	./TP1 test/ListaEnlazada/ListaEnlazada700.txt secuencial
+
+testSecuencialListaEnlazada800: TP1
+	./TP1 test/ListaEnlazada/ListaEnlazada800.txt secuencial
+
+testSecuencialListaEnlazada900: TP1
+	./TP1 test/ListaEnlazada/ListaEnlazada900.txt secuencial
+
+testSecuencialListaEnlazada1000: TP1
+	./TP1 test/ListaEnlazada/ListaEnlazada1000.txt secuencial
+
