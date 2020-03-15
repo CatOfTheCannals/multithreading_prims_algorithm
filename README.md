@@ -6,4 +6,4 @@ POSIX API standard.
 
 ### Run the binary with python
 
-exp/run_and_plot_multithreaded_mst_computation_performance.ipynb
+`exp/run_and_plot_multithreaded_mst_computation_performance.ipynb`
